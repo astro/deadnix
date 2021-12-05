@@ -3,7 +3,10 @@
 Scan `.nix` files for dead code (unused variable bindings).
 
 ```
-nix run github:astro/deadnix test.nix
+$ nix run github:astro/deadnix test.nix
+```
+
+```
 test.nix:1:
 > unusedArgs@{ unusedArg, usedArg, ... }:
 > ^^^^^^^^^^   ^^^^^^^^^
