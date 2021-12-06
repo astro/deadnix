@@ -47,7 +47,5 @@
       overlay = final: prev: {
         deadnix = self.packages.${prev.system};
       };
-
-      nixosModule = import ./nixos-module.nix { inherit self; };
     };
 }
