@@ -12,6 +12,7 @@ use rnix::{
 };
 use crate::usage::find_usage;
 
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum BindingKind {
     LambdaAt,
     LambdaPattern,
@@ -37,9 +38,10 @@ impl fmt::Display for BindingKind {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct DeadCode {
-    kind: BindingKind,
-    name: Ident,
+    pub kind: BindingKind,
+    pub name: Ident,
     pub node: SyntaxNode<NixLanguage>,
 }
 

@@ -26,6 +26,7 @@
       packages.deadnix = naersk-lib.buildPackage {
         pname = "deadnix";
         src = ./.;
+        doCheck = true;
       };
       defaultPackage = packages.deadnix;
 

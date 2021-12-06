@@ -2,6 +2,7 @@ use std::{env::args, fs};
 
 mod usage;
 mod dead_code;
+mod dead_code_tests;
 
 
 fn main() {
