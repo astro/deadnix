@@ -1,178 +1,8 @@
-use std::{env::args, fmt, fs};
-use rowan::api::SyntaxNode;
-use rnix::{
-    NixLanguage,
-    SyntaxKind,
-    types::{
-        AttrSet,
-        EntryHolder, Ident, Lambda, LetIn,
-        Pattern,
-        TokenWrapper,
-        TypedNode,
-    },
-};
+use std::{env::args, fs};
 
-enum ResultKind {
-    LambdaAt,
-    LambdaPattern,
-    LambdaArg,
-    LetInEntry,
-    LetInInherit,
-}
+mod usage;
+mod dead_code;
 
-impl fmt::Display for ResultKind {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ResultKind::LambdaAt =>
-                write!(fmt, "lambda @-binding"),
-            ResultKind::LambdaPattern =>
-                write!(fmt, "lambda pattern"),
-            ResultKind::LambdaArg =>
-                write!(fmt, "lambda argument"),
-            ResultKind::LetInEntry =>
-                write!(fmt, "let in binding"),
-            ResultKind::LetInInherit =>
-                write!(fmt, "let in inherit binding"),
-        }
-    }
-}
-
-struct ResultItem {
-    kind: ResultKind,
-    name: Ident,
-    node: SyntaxNode<NixLanguage>,
-}
-
-/// find out if `name` is used in `node`
-fn find_usage(name: &Ident, node: SyntaxNode<NixLanguage>) -> bool {
-    // TODO: return false if shadowed by other let/rec/param binding
-
-    if node.kind() == SyntaxKind::NODE_IDENT {
-        Ident::cast(node).expect("Ident::cast").as_str() == name.as_str()
-    } else {
-        node.children().any(|node| find_usage(name, node))
-    }
-}
-
-fn find_dead_code(node: SyntaxNode<NixLanguage>, results: &mut Vec<ResultItem>) {
-    match node.kind() {
-        SyntaxKind::NODE_LAMBDA => {
-            let lambda = Lambda::cast(node.clone())
-                .expect("Lambda::cast");
-            if let Some(arg) = lambda.arg() {
-                match arg.kind() {
-                    SyntaxKind::NODE_IDENT => {
-                        let name = Ident::cast(arg.clone())
-                            .expect("Ident::cast");
-                        if !find_usage(&name, node.clone()) {
-                            results.push(ResultItem {
-                                kind: ResultKind::LambdaArg,
-                                name,
-                                node: arg,
-                            });
-                        }
-                    }
-                    SyntaxKind::NODE_PATTERN => {
-                        let pattern = Pattern::cast(arg)
-                            .expect("Pattern::cast");
-                        if let Some(name) = pattern.at() {
-                            // check if used in the pattern bindings, or the body
-                            if !pattern.entries().any(|entry| find_usage(&name, entry.node().clone()))
-                            && !find_usage(&name, lambda.body().expect("body"))
-                            {
-                                results.push(ResultItem {
-                                    kind: ResultKind::LambdaAt,
-                                    node: name.node().clone(),
-                                    name,
-                                });
-                            }
-                        }
-                        if pattern.ellipsis() {
-                            // `...` means args can be dropped
-                            for entry in pattern.entries() {
-                                let name = entry.name()
-                                    .expect("entry.name()");
-                                // check if used in the other pattern bindings, or the body
-                                if !pattern.entries().any(|entry| {
-                                    let other_name = entry.name().expect("entry.name()");
-                                    other_name.as_str() != name.as_str() &&
-                                    find_usage(&name, entry.node().clone())
-                                })
-                                && !find_usage(&name, lambda.body().expect("lambda.body()")) {
-                                    results.push(ResultItem {
-                                        kind: ResultKind::LambdaPattern,
-                                        node: name.node().clone(),
-                                        name,
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    _ => panic!("Unhandled arg kind: {:?}", arg.kind()),
-                }
-            }
-        }
-        
-        SyntaxKind::NODE_LET_IN => {
-            let let_in = LetIn::cast(node.clone())
-                .expect("LetIn::cast");
-            if let Some(body) = let_in.body() {
-                for key_value in let_in.entries() {
-                    let key = key_value.key()
-                        .expect("key_value.key()");
-                    let name_node = key.path().next()
-                        .expect("key.path()");
-                    let name = Ident::cast(name_node.clone())
-                            .expect("Ident::cast");
-                    if !let_in.entries().any(|entry| {
-                        let other_name = entry.key().expect("entry.key()")
-                            .path().next().expect("path().next()");
-                        let other_name = Ident::cast(other_name)
-                            .expect("Ident::cast");
-                        other_name.as_str() != name.as_str() &&
-                        find_usage(&name, entry.node().clone())
-                    })
-                    && !let_in.inherits().any(|inherit|
-                        inherit.from().map(|from|
-                            find_usage(&name, from.node().clone())
-                        ).unwrap_or(false))
-                    && !find_usage(&name, body.clone()) {
-                        results.push(ResultItem {
-                            kind: ResultKind::LetInEntry,
-                            node: name_node,
-                            name,
-                        });
-                    }
-                }
-                for inherit in let_in.inherits() {
-                    for ident in inherit.idents() {
-                        let name_node = ident.node();
-                        let name = Ident::cast(name_node.clone())
-                            .expect("Ident::cast");
-                        if !let_in.entries().any(|entry| find_usage(&name, entry.node().clone()))
-                        && !let_in.inherits().any(|inherit|
-                            inherit.from().map(|from|
-                                find_usage(&name, from.node().clone())
-                            ).unwrap_or(false))
-                        && !find_usage(&name, body.clone()) {
-                            results.push(ResultItem {
-                                kind: ResultKind::LetInInherit,
-                                node: name_node.clone(),
-                                name,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        _ => {}
-    }
-
-    for child in node.children() {
-        find_dead_code(child, results);
-    }
-}
 
 fn main() {
     for path in args().skip(1) {
@@ -195,7 +25,7 @@ fn main() {
         }
 
         let mut results = Vec::new();
-        find_dead_code(ast.node(), &mut results);
+        crate::dead_code::find_dead_code(ast.node(), &mut results);
 
         if results.len() == 0 {
             return;
@@ -258,7 +88,7 @@ fn main() {
             for result in results.iter().rev() {
                 let range = result.node.text_range();
                 let start = usize::from(range.start());
-                println!("> {}unused {}: {}", &bars[..start - line_start], result.kind, result.name.as_str());
+                println!("> {}Unused {}", &bars[..start - line_start], result);
             }
         }
     }
