@@ -53,6 +53,12 @@ fn let_in_inherit_dead() {
 }
 
 #[test]
+fn lambda_arg_alive() {
+    let results = run("alive: alive");
+    assert_eq!(0, results.len());
+}
+
+#[test]
 fn lambda_arg_dead() {
     let results = run("dead: false");
     assert_eq!(1, results.len());
@@ -61,11 +67,23 @@ fn lambda_arg_dead() {
 }
 
 #[test]
+fn lambda_at_alive() {
+    let results = run("alive@{ ... }: alive");
+    assert_eq!(0, results.len());
+}
+
+#[test]
 fn lambda_at_dead() {
     let results = run("dead@{ ... }: false");
     assert_eq!(1, results.len());
     assert_eq!(results[0].kind, BindingKind::LambdaAt);
     assert_eq!(results[0].name.as_str(), "dead");
+}
+
+#[test]
+fn lambda_pattern_alive() {
+    let results = run("{ alive, ... }: alive");
+    assert_eq!(0, results.len());
 }
 
 #[test]
