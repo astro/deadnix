@@ -2,6 +2,8 @@
 
 Scan `.nix` files for dead code (unused variable bindings).
 
+## Usage with Nix Flakes
+
 ```
 $ nix run github:astro/deadnix test.nix
 ```
@@ -29,3 +31,15 @@ test.nix:12:
 >         |
 >         unused lambda pattern: unusedArg2
 ```
+
+
+## What if the produced reports are wrong?
+
+Please open an issue. Do not forget to include the `.nix` code that
+produces incorrect results.
+
+
+## Commercial Support
+
+The author can be hired to implement the features that you wish, or to
+integrate this tool into your toolchain.
