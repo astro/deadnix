@@ -255,8 +255,7 @@ fn main() {
             println!("> {}", bars);
 
             // messages
-            for i in (0..results.len()).rev() {
-                let result = &results[i];
+            for result in results.iter().rev() {
                 let range = result.node.text_range();
                 let start = usize::from(range.start());
                 println!("> {}unused {}: {}", &bars[..start - line_start], result.kind, result.name.as_str());
