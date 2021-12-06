@@ -12,7 +12,7 @@
       mozilla = pkgs.callPackage (mozillapkgs + "/package-set.nix") {};
       rust = (mozilla.rustChannelOf {
         channel = "stable";
-        date = "2021-12-02";  # "2021-11-01";
+        date = "2021-12-02";
         sha256 = "0rqgx90k9lhfwaf63ccnm5qskzahmr4q18i18y6kdx48y26w3xz8";
       }).rust;
 
