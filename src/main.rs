@@ -24,9 +24,7 @@ fn main() {
             continue;
         }
 
-        let mut results = Vec::new();
-        crate::dead_code::find_dead_code(ast.node(), &mut results);
-
+        let results = crate::dead_code::find_dead_code(ast.node());
         if results.len() == 0 {
             return;
         }

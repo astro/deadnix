@@ -49,7 +49,14 @@ impl fmt::Display for DeadCode {
     }
 }
 
-pub fn find_dead_code(node: SyntaxNode<NixLanguage>, results: &mut Vec<DeadCode>) {
+pub fn find_dead_code(node: SyntaxNode<NixLanguage>) -> Vec<DeadCode> {
+    let mut results = Vec::new();
+    scan(node, &mut results);
+    results
+}
+
+// recursively scan the AST, accumulating results
+fn scan(node: SyntaxNode<NixLanguage>, results: &mut Vec<DeadCode>) {
     match node.kind() {
         SyntaxKind::NODE_LAMBDA => {
             let lambda = Lambda::cast(node.clone())
@@ -165,6 +172,6 @@ pub fn find_dead_code(node: SyntaxNode<NixLanguage>, results: &mut Vec<DeadCode>
     }
 
     for child in node.children() {
-        find_dead_code(child, results);
+        scan(child, results);
     }
 }
