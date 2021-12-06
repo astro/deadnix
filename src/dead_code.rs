@@ -68,7 +68,7 @@ fn scan(node: SyntaxNode<NixLanguage>, results: &mut Vec<DeadCode>) {
                     SyntaxKind::NODE_IDENT => {
                         let name = Ident::cast(arg.clone())
                             .expect("Ident::cast");
-                        if !find_usage(&name, node.clone()) {
+                        if !find_usage(&name, lambda.body().expect("lambda.body()")) {
                             results.push(DeadCode {
                                 kind: BindingKind::LambdaArg,
                                 name,
