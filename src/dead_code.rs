@@ -1,176 +1,71 @@
-use std::fmt;
+use std::{
+    collections::HashSet,
+    fmt,
+};
 use rowan::api::SyntaxNode;
 use rnix::{
     NixLanguage,
-    SyntaxKind,
-    types::{
-        EntryHolder, Ident, Lambda, LetIn,
-        Pattern,
-        TokenWrapper,
-        TypedNode,
-    },
+    types::TokenWrapper,
 };
-use crate::usage::find_usage;
+use crate::{
+    binding::Binding,
+    scope::Scope,
+    usage::find_usage,
+};
 
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub enum BindingKind {
-    LambdaAt,
-    LambdaPattern,
-    LambdaArg,
-    LetInEntry,
-    LetInInherit,
-}
-
-impl fmt::Display for BindingKind {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            BindingKind::LambdaAt =>
-                write!(fmt, "lambda @-binding"),
-            BindingKind::LambdaPattern =>
-                write!(fmt, "lambda pattern"),
-            BindingKind::LambdaArg =>
-                write!(fmt, "lambda argument"),
-            BindingKind::LetInEntry =>
-                write!(fmt, "let in binding"),
-            BindingKind::LetInInherit =>
-                write!(fmt, "let in inherit binding"),
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct DeadCode {
-    pub kind: BindingKind,
-    pub name: Ident,
-    pub node: SyntaxNode<NixLanguage>,
+    pub scope: Scope,
+    pub binding: Binding,
+}
+
+impl PartialEq for DeadCode {
+    fn eq(&self, other: &Self) -> bool {
+        self.binding == other.binding
+    }
+}
+impl Eq for DeadCode {}
+
+impl std::hash::Hash for DeadCode {
+    fn hash<H: std::hash::Hasher>(&self, hasher: &mut H) {
+        self.binding.name.as_str().hash(hasher);
+        self.binding.node.hash(hasher);
+    }
 }
 
 impl fmt::Display for DeadCode {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{} {}", self.kind, self.name.as_str())
+        write!(fmt, "{} {}", self.scope, self.binding.name.as_str())
     }
 }
 
-pub fn find_dead_code(node: SyntaxNode<NixLanguage>) -> Vec<DeadCode> {
-    let mut results = Vec::new();
+pub fn find_dead_code(node: SyntaxNode<NixLanguage>) -> HashSet<DeadCode> {
+    // TODO: loop
+    let mut results = HashSet::new();
     scan(node, &mut results);
     results
 }
 
-// recursively scan the AST, accumulating results
-fn scan(node: SyntaxNode<NixLanguage>, results: &mut Vec<DeadCode>) {
-    match node.kind() {
-        SyntaxKind::NODE_LAMBDA => {
-            let lambda = Lambda::cast(node.clone())
-                .expect("Lambda::cast");
-            if let Some(arg) = lambda.arg() {
-                match arg.kind() {
-                    SyntaxKind::NODE_IDENT => {
-                        let name = Ident::cast(arg.clone())
-                            .expect("Ident::cast");
-                        if !find_usage(&name, lambda.body().expect("lambda.body()")) {
-                            results.push(DeadCode {
-                                kind: BindingKind::LambdaArg,
-                                name,
-                                node: arg,
-                            });
-                        }
-                    }
-                    SyntaxKind::NODE_PATTERN => {
-                        let pattern = Pattern::cast(arg)
-                            .expect("Pattern::cast");
-                        if let Some(name) = pattern.at() {
-                            // check if used in the pattern bindings, or the body
-                            if !pattern.entries().any(|entry| find_usage(&name, entry.node().clone()))
-                            && !find_usage(&name, lambda.body().expect("body"))
-                            {
-                                results.push(DeadCode {
-                                    kind: BindingKind::LambdaAt,
-                                    node: name.node().clone(),
-                                    name,
-                                });
-                            }
-                        }
-                        if pattern.ellipsis() {
-                            // `...` means args can be dropped
-                            for entry in pattern.entries() {
-                                let name = entry.name()
-                                    .expect("entry.name()");
-                                // check if used in the other pattern bindings, or the body
-                                if !pattern.entries().any(|entry| {
-                                    let other_name = entry.name().expect("entry.name()");
-                                    other_name.as_str() != name.as_str() &&
-                                    find_usage(&name, entry.node().clone())
-                                })
-                                && !find_usage(&name, lambda.body().expect("lambda.body()")) {
-                                    results.push(DeadCode {
-                                        kind: BindingKind::LambdaPattern,
-                                        node: name.node().clone(),
-                                        name,
-                                    });
-                                }
-                            }
-                        }
-                    }
-                    _ => panic!("Unhandled arg kind: {:?}", arg.kind()),
-                }
+/// recursively scan the AST, accumulating results
+fn scan(node: SyntaxNode<NixLanguage>, results: &mut HashSet<DeadCode>) {
+    if let Some(scope) = Scope::new(&node) {
+        for binding in scope.bindings() {
+            let result = DeadCode {
+                scope: scope.clone(),
+                binding,
+            };
+            if ! scope.bodies().any(|body|
+                // exclude this binding's own node
+                body != result.binding.node &&
+                // excluding already unused results
+                results.get(&result).is_none() &&
+                // find if used anywhere
+                find_usage(&result.binding.name, body)
+            ) {
+                results.insert(result);
             }
         }
-
-        SyntaxKind::NODE_LET_IN => {
-            let let_in = LetIn::cast(node.clone())
-                .expect("LetIn::cast");
-            if let Some(body) = let_in.body() {
-                for key_value in let_in.entries() {
-                    let key = key_value.key()
-                        .expect("key_value.key()");
-                    let name_node = key.path().next()
-                        .expect("key.path()");
-                    let name = Ident::cast(name_node.clone())
-                            .expect("Ident::cast");
-                    if !let_in.entries().any(|entry| {
-                        let other_name = entry.key().expect("entry.key()")
-                            .path().next().expect("path().next()");
-                        let other_name = Ident::cast(other_name)
-                            .expect("Ident::cast");
-                        other_name.as_str() != name.as_str() &&
-                        find_usage(&name, entry.node().clone())
-                    })
-                    && !let_in.inherits().any(|inherit|
-                        inherit.from().map(|from|
-                            find_usage(&name, from.node().clone())
-                        ).unwrap_or(false))
-                    && !find_usage(&name, body.clone()) {
-                        results.push(DeadCode {
-                            kind: BindingKind::LetInEntry,
-                            node: name_node,
-                            name,
-                        });
-                    }
-                }
-                for inherit in let_in.inherits() {
-                    for ident in inherit.idents() {
-                        let name_node = ident.node();
-                        let name = Ident::cast(name_node.clone())
-                            .expect("Ident::cast");
-                        if !let_in.entries().any(|entry| find_usage(&name, entry.node().clone()))
-                        && !let_in.inherits().any(|inherit|
-                            inherit.from().map(|from|
-                                find_usage(&name, from.node().clone())
-                            ).unwrap_or(false))
-                        && !find_usage(&name, body.clone()) {
-                            results.push(DeadCode {
-                                kind: BindingKind::LetInInherit,
-                                node: name_node.clone(),
-                                name,
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        _ => {}
     }
 
     for child in node.children() {

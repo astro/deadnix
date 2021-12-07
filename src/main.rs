@@ -1,5 +1,7 @@
 use std::{env::args, fs};
 
+mod scope;
+mod binding;
 mod usage;
 mod dead_code;
 mod dead_code_tests;
@@ -42,7 +44,7 @@ fn main() {
         let mut last_line = 0;
         let mut result_by_lines = Vec::new();
         for result in results {
-            let range = result.node.text_range();
+            let range = result.binding.node.text_range();
             let start = usize::from(range.start());
             let line_number = lines.iter().filter(|(offset, _)| *offset <= start).count();
             if line_number != last_line {
@@ -58,14 +60,14 @@ fn main() {
             println!("{}:{}:", path, line_number);
             // line
             println!("> {}", lines[*line_number - 1].1);
-            results.sort_unstable_by_key(|result| result.node.text_range().start());
+            results.sort_unstable_by_key(|result| result.binding.node.text_range().start());
 
             // underscores ^^^^^^^^^
             let line_start = lines[*line_number - 1].0;
             let mut pos = line_start;
             print!("> ");
             for result in results.iter() {
-                let range = result.node.text_range();
+                let range = result.binding.node.text_range();
                 let start = usize::from(range.start());
                 let end = usize::from(range.end());
                 print!("{0: <1$}{2:^<3$}", "", start - pos, "", end - start);
@@ -76,7 +78,7 @@ fn main() {
             let mut bars = String::new();
             let mut pos = line_start;
             for result in results.iter() {
-                let range = result.node.text_range();
+                let range = result.binding.node.text_range();
                 let start = usize::from(range.start());
                 bars = format!("{}{1: <2$}|", bars, "", start - pos);
                 pos = start + 1;
@@ -85,7 +87,7 @@ fn main() {
 
             // messages
             for result in results.iter().rev() {
-                let range = result.node.text_range();
+                let range = result.binding.node.text_range();
                 let start = usize::from(range.start());
                 println!("> {}Unused {}", &bars[..start - line_start], result);
             }

@@ -1,0 +1,156 @@
+use std::fmt;
+use rowan::api::SyntaxNode;
+use rnix::{
+    NixLanguage,
+    SyntaxKind,
+    types::{
+        EntryHolder, Ident, Lambda, LetIn,
+        Pattern,
+        TypedNode,
+    },
+};
+use crate::binding::Binding;
+
+/// AST subtree that declares variables
+#[derive(Debug, Clone)]
+pub enum Scope {
+    LambdaPattern(Pattern, SyntaxNode<NixLanguage>),
+    LambdaArg(Ident, SyntaxNode<NixLanguage>),
+    LetIn(LetIn),
+    // TODO: RecAttrset
+}
+
+impl fmt::Display for Scope {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Scope::LambdaPattern(_, _) =>
+                write!(fmt, "lambda pattern"),
+            Scope::LambdaArg(_, _) =>
+                write!(fmt, "lambda argument"),
+            Scope::LetIn(_) =>
+                write!(fmt, "let in binding"),
+        }
+    }
+}
+
+impl Scope {
+    /// Construct a new Scope *if* this is an AST node that opens a new scope
+    pub fn new(node: &SyntaxNode<NixLanguage>) -> Option<Self> {
+        match node.kind() {
+            SyntaxKind::NODE_LAMBDA => {
+                let lambda = Lambda::cast(node.clone())
+                    .expect("Lambda::cast");
+                let arg = lambda.arg().expect("lambda.arg()");
+                let body = lambda.body()
+                    .expect("lambda.body()");
+                match arg.kind() {
+                    SyntaxKind::NODE_IDENT => {
+                        let name = Ident::cast(arg.clone())
+                            .expect("Ident::cast");
+                        Some(Scope::LambdaArg(name, body))
+                    }
+                    SyntaxKind::NODE_PATTERN => {
+                        let pattern = Pattern::cast(arg)
+                            .expect("Pattern::cast");
+                        Some(Scope::LambdaPattern(pattern, body))
+                    }
+                    _ => panic!("Unhandled arg kind: {:?}", arg.kind()),
+                }
+            }
+
+            SyntaxKind::NODE_LET_IN => {
+                let let_in = LetIn::cast(node.clone())
+                    .expect("LetIn::cast");
+                Some(Scope::LetIn(let_in))
+            }
+
+            _ => None
+        }
+    }
+
+    /// The Bindings this Scope introduces
+    pub fn bindings(&self) -> Box<dyn Iterator<Item = Binding>> {
+        match self {
+            Scope::LambdaPattern(pattern, _) =>
+                Box::new(
+                    pattern.at()
+                        .map(|name| {
+                            let binding_node = name.node().clone();
+                            Binding::new(name, binding_node)
+                        })
+                        .into_iter()
+                    .chain(
+                        pattern.entries()
+                            .map(|entry| {
+                                let name = entry.name()
+                                    .expect("entry.name");
+                                // TODO: respect pattern.ellipsis()
+                                Binding::new(name, entry.node().clone())
+                            })
+                    )
+                ),
+
+            Scope::LambdaArg(name, _) =>
+                Box::new(
+                    Some(
+                        Binding::new(name.clone(), name.node().clone())
+                    ).into_iter()
+                ),
+
+            Scope::LetIn(let_in) =>
+                Box::new(
+                    let_in.inherits()
+                        .flat_map(|inherit| {
+                            let binding_node = inherit.node().clone();
+                            inherit.idents()
+                                .map(move |name| {
+                                    Binding::new(name, binding_node.clone())
+                                })
+                        })
+                    .chain(
+                        let_in.entries()
+                            .map(|entry| {
+                                let key = entry.key()
+                                    .expect("entry.key")
+                                    .path().next()
+                                    .expect("key.path.next");
+                                let name = Ident::cast(key)
+                                    .expect("Ident::cast");
+                                Binding::new(name, entry.node().clone())
+                            })
+                    )
+                ),
+        }
+    }
+
+    /// The code subtrees in which the introduced variables are available
+    /// TODO: return &SyntaxNode
+    pub fn bodies(&self) -> Box<dyn Iterator<Item = SyntaxNode<NixLanguage>>> {
+        match self {
+            Scope::LambdaPattern(pattern, body) =>
+                Box::new(
+                    pattern.entries()
+                        .map(|entry| entry.node().clone())
+                    .chain(
+                        Some(body.clone()).into_iter()
+                    )
+                ),
+
+            Scope::LambdaArg(_, body) =>
+                Box::new(
+                    Some(body.clone()).into_iter()
+                ),
+
+            Scope::LetIn(let_in) =>
+                Box::new(
+                    let_in.inherits()
+                        .map(|inherit| inherit.node().clone())
+                        .chain(
+                            let_in.entries()
+                                .map(|entry| entry.node().clone())
+                        )
+                        .chain(let_in.body())
+                ),
+        }
+    }
+}
