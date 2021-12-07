@@ -75,6 +75,12 @@ fn lambda_at_alive() {
 }
 
 #[test]
+fn lambda_at_pattern_alive() {
+    let results = run("alive@{ x ? alive, ... }: x");
+    assert_eq!(0, results.len());
+}
+
+#[test]
 fn lambda_at_dead() {
     let results = run("dead@{ ... }: false");
     assert_eq!(1, results.len());
