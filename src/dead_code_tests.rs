@@ -8,8 +8,6 @@ fn run(content: &str) -> Vec<DeadCode> {
     assert_eq!(0, ast.errors().len());
 
     find_dead_code(ast.node())
-        .into_iter()
-        .collect()
 }
 
 #[test]
@@ -88,4 +86,12 @@ fn lambda_pattern_dead() {
     let results = run("alive@{ dead, ... }: alive");
     assert_eq!(1, results.len());
     assert_eq!(results[0].binding.name.as_str(), "dead");
+}
+
+#[test]
+fn looped() {
+    let results = run("let dead1 = dead2; dead2 = {}; in false");
+    assert_eq!(2, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead1");
+    assert_eq!(results[1].binding.name.as_str(), "dead2");
 }

@@ -61,7 +61,6 @@ fn main() {
             println!("{}:{}:", path, line_number);
             // line
             println!("> {}", lines[*line_number - 1].1);
-            results.sort_unstable_by_key(|result| result.binding.name.node().text_range().start());
 
             // underscores ^^^^^^^^^
             let line_start = lines[*line_number - 1].0;

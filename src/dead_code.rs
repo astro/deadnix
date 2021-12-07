@@ -1,11 +1,11 @@
 use std::{
-    collections::HashSet,
+    collections::HashMap,
     fmt,
 };
 use rowan::api::SyntaxNode;
 use rnix::{
     NixLanguage,
-    types::TokenWrapper,
+    types::{TokenWrapper, TypedNode},
 };
 use crate::{
     binding::Binding,
@@ -20,50 +20,46 @@ pub struct DeadCode {
     pub binding: Binding,
 }
 
-impl PartialEq for DeadCode {
-    fn eq(&self, other: &Self) -> bool {
-        self.binding == other.binding
-    }
-}
-impl Eq for DeadCode {}
-
-impl std::hash::Hash for DeadCode {
-    fn hash<H: std::hash::Hasher>(&self, hasher: &mut H) {
-        self.binding.name.as_str().hash(hasher);
-        self.binding.node.hash(hasher);
-    }
-}
-
 impl fmt::Display for DeadCode {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         write!(fmt, "{} {}", self.scope, self.binding.name.as_str())
     }
 }
 
-pub fn find_dead_code(node: SyntaxNode<NixLanguage>) -> HashSet<DeadCode> {
-    // TODO: loop
-    let mut results = HashSet::new();
-    scan(node, &mut results);
+pub fn find_dead_code(node: SyntaxNode<NixLanguage>) -> Vec<DeadCode> {
+    let mut results = HashMap::new();
+    // loop so that bodies are ignored that were detected as dead in a
+    // previous iteration
+    let mut prev_results_len = 1;
+    while prev_results_len != results.len() {
+        prev_results_len = results.len();
+        scan(node.clone(), &mut results);
+    }
+
+    let mut results = results.into_values()
+        .collect::<Vec<_>>();
+    results.sort_unstable_by_key(|result|
+        result.binding.name.node().text_range().start()
+    );
     results
 }
 
 /// recursively scan the AST, accumulating results
-fn scan(node: SyntaxNode<NixLanguage>, results: &mut HashSet<DeadCode>) {
+fn scan(node: SyntaxNode<NixLanguage>, results: &mut HashMap<SyntaxNode<NixLanguage>, DeadCode>) {
     if let Some(scope) = Scope::new(&node) {
         for binding in scope.bindings() {
-            let result = DeadCode {
-                scope: scope.clone(),
-                binding,
-            };
             if ! scope.bodies().any(|body|
                 // exclude this binding's own node
-                body != result.binding.node &&
+                body != binding.node &&
                 // excluding already unused results
-                results.get(&result).is_none() &&
+                results.get(&body).is_none() &&
                 // find if used anywhere
-                find_usage(&result.binding.name, body)
+                find_usage(&binding.name, body)
             ) {
-                results.insert(result);
+                results.insert(binding.node.clone(), DeadCode {
+                    scope: scope.clone(),
+                    binding: binding,
+                });
             }
         }
     }
