@@ -85,6 +85,13 @@ impl Scope {
         }
     }
 
+    pub fn is_lambda_arg(&self) -> bool {
+        match self {
+            Scope::LambdaArg(_, _) => true,
+            _ => false,
+        }
+    }
+
     /// The Bindings this Scope introduces
     pub fn bindings(&self) -> Box<dyn Iterator<Item = Binding>> {
         match self {

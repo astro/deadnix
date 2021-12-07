@@ -1,13 +1,16 @@
 #![cfg(test)]
 
 use rnix::types::TokenWrapper;
-use crate::dead_code::{DeadCode, find_dead_code};
+use crate::dead_code::{DeadCode, Settings};
 
 fn run(content: &str) -> Vec<DeadCode> {
     let ast = rnix::parse(&content);
     assert_eq!(0, ast.errors().len());
 
-    find_dead_code(ast.node())
+    Settings {
+        no_lambda_arg: false,
+        no_underscore: false,
+    }.find_dead_code(ast.node())
 }
 
 #[test]

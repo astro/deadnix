@@ -8,6 +8,7 @@ let
   used3 = used4: "k.${used4}";
   used4 = { t = used_inherit; };
   shadowed = 42;
+  _unused = unused: false;
 in {
   x = { unusedArg2, x ? args.y, ... }@args: used1 + x;
   inherit used2;

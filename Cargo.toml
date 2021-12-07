@@ -12,3 +12,4 @@ documentation = "https://docs.rs/deadnix"
 [dependencies]
 rowan = "0.12"
 rnix = "0.10"
+clap = "2"
