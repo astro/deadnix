@@ -37,6 +37,13 @@ fn let_in_dead_recursive() {
 }
 
 #[test]
+fn let_in_shadowed() {
+    let results = run("let dead = true; in let dead = false; in dead");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead");
+}
+
+#[test]
 fn let_in_inherit_alive() {
     let results = run("let alive = {}; inherit (alive) key; in key");
     assert_eq!(0, results.len());
@@ -45,6 +52,13 @@ fn let_in_inherit_alive() {
 #[test]
 fn let_in_inherit_dead() {
     let results = run("let inherit (alive) dead; in alive");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead");
+}
+
+#[test]
+fn let_in_inherit_shadowed() {
+    let results = run("let inherit (dead) dead; in let inherit (alive) dead; in dead");
     assert_eq!(1, results.len());
     assert_eq!(results[0].binding.name.as_str(), "dead");
 }
@@ -69,6 +83,13 @@ fn lambda_arg_dead() {
 }
 
 #[test]
+fn lambda_arg_shadowed() {
+    let results = run("dead: dead: dead");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead");
+}
+
+#[test]
 fn lambda_at_alive() {
     let results = run("alive@{ ... }: alive");
     assert_eq!(0, results.len());
@@ -83,6 +104,13 @@ fn lambda_at_pattern_alive() {
 #[test]
 fn lambda_at_dead() {
     let results = run("dead@{ ... }: false");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead");
+}
+
+#[test]
+fn lambda_at_shadowed() {
+    let results = run("dead@{ ... }: dead@{ ... }: dead");
     assert_eq!(1, results.len());
     assert_eq!(results[0].binding.name.as_str(), "dead");
 }
@@ -104,6 +132,13 @@ fn lambda_pattern_dead() {
 fn lambda_pattern_no_ellipsis() {
     let results = run("{ alive }: false");
     assert_eq!(0, results.len());
+}
+
+#[test]
+fn lambda_pattern_shadowed() {
+    let results = run("{ dead, ... }: { dead, ... }: dead");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead");
 }
 
 #[test]
