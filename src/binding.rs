@@ -11,6 +11,7 @@ use rnix::{
 pub struct Binding {
     pub name: Ident,
     pub node: SyntaxNode<NixLanguage>,
+    mortal: bool,
 }
 
 impl PartialEq for Binding {
@@ -22,7 +23,11 @@ impl PartialEq for Binding {
 impl Eq for Binding {}
 
 impl Binding {
-    pub fn new(name: Ident, node: SyntaxNode<NixLanguage>) -> Self {
-        Binding { name, node }
+    pub fn new(name: Ident, node: SyntaxNode<NixLanguage>, mortal: bool) -> Self {
+        Binding { name, node, mortal }
+    }
+
+    pub fn is_mortal(&self) -> bool {
+        self.mortal
     }
 }

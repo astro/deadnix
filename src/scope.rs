@@ -4,8 +4,12 @@ use rnix::{
     NixLanguage,
     SyntaxKind,
     types::{
-        EntryHolder, Ident, Lambda, LetIn,
+        EntryHolder,
+        Ident,
+        Lambda,
+        LetIn,
         Pattern,
+        TokenWrapper,
         TypedNode,
     },
 };
@@ -71,31 +75,34 @@ impl Scope {
     /// The Bindings this Scope introduces
     pub fn bindings(&self) -> Box<dyn Iterator<Item = Binding>> {
         match self {
-            Scope::LambdaPattern(pattern, _) =>
+            Scope::LambdaPattern(pattern, _) => {
+                let mortal = pattern.ellipsis();
                 Box::new(
                     pattern.at()
                         .map(|name| {
                             let binding_node = name.node().clone();
-                            Binding::new(name, binding_node)
+                            Binding::new(name, binding_node, true)
                         })
                         .into_iter()
                     .chain(
                         pattern.entries()
-                            .map(|entry| {
+                            .map(move |entry| {
                                 let name = entry.name()
                                     .expect("entry.name");
-                                // TODO: respect pattern.ellipsis()
-                                Binding::new(name, entry.node().clone())
+                                Binding::new(name, entry.node().clone(), mortal)
                             })
                     )
-                ),
+                )
+            }
 
-            Scope::LambdaArg(name, _) =>
+            Scope::LambdaArg(name, _) => {
+                let mortal = ! name.as_str().starts_with("_");
                 Box::new(
                     Some(
-                        Binding::new(name.clone(), name.node().clone())
+                        Binding::new(name.clone(), name.node().clone(), mortal)
                     ).into_iter()
-                ),
+                )
+            }
 
             Scope::LetIn(let_in) =>
                 Box::new(
@@ -104,7 +111,7 @@ impl Scope {
                             let binding_node = inherit.node().clone();
                             inherit.idents()
                                 .map(move |name| {
-                                    Binding::new(name, binding_node.clone())
+                                    Binding::new(name, binding_node.clone(), true)
                                 })
                         })
                     .chain(
@@ -116,7 +123,7 @@ impl Scope {
                                     .expect("key.path.next");
                                 let name = Ident::cast(key)
                                     .expect("Ident::cast");
-                                Binding::new(name, entry.node().clone())
+                                Binding::new(name, entry.node().clone(), true)
                             })
                     )
                 ),

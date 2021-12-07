@@ -48,7 +48,8 @@ pub fn find_dead_code(node: SyntaxNode<NixLanguage>) -> Vec<DeadCode> {
 fn scan(node: SyntaxNode<NixLanguage>, results: &mut HashMap<SyntaxNode<NixLanguage>, DeadCode>) {
     if let Some(scope) = Scope::new(&node) {
         for binding in scope.bindings() {
-            if ! scope.bodies().any(|body|
+            if binding.is_mortal()
+            && ! scope.bodies().any(|body|
                 // exclude this binding's own node
                 body != binding.node &&
                 // excluding already unused results
