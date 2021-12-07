@@ -4,6 +4,7 @@ use rnix::{
     NixLanguage,
     SyntaxKind,
     types::{
+        AttrSet,
         EntryHolder,
         Ident,
         Lambda,
@@ -21,7 +22,7 @@ pub enum Scope {
     LambdaPattern(Pattern, SyntaxNode<NixLanguage>),
     LambdaArg(Ident, SyntaxNode<NixLanguage>),
     LetIn(LetIn),
-    // TODO: RecAttrset
+    RecAttrSet(AttrSet),
 }
 
 impl fmt::Display for Scope {
@@ -32,7 +33,9 @@ impl fmt::Display for Scope {
             Scope::LambdaArg(_, _) =>
                 write!(fmt, "lambda argument"),
             Scope::LetIn(_) =>
-                write!(fmt, "let in binding"),
+                write!(fmt, "let binding"),
+            Scope::RecAttrSet(_) =>
+                write!(fmt, "rec attrset"),
         }
     }
 }
@@ -66,6 +69,16 @@ impl Scope {
                 let let_in = LetIn::cast(node.clone())
                     .expect("LetIn::cast");
                 Some(Scope::LetIn(let_in))
+            }
+
+            SyntaxKind::NODE_ATTR_SET => {
+                let attr_set = AttrSet::cast(node.clone())
+                    .expect("AttrSet::cast");
+                if attr_set.recursive() {
+                    Some(Scope::RecAttrSet(attr_set))
+                } else {
+                    None
+                }
             }
 
             _ => None
@@ -127,6 +140,30 @@ impl Scope {
                             })
                     )
                 ),
+
+            Scope::RecAttrSet(attr_set) =>
+                Box::new(
+                    attr_set.inherits()
+                        .flat_map(|inherit| {
+                            let binding_node = inherit.node().clone();
+                            inherit.idents()
+                                .map(move |name| {
+                                    Binding::new(name, binding_node.clone(), false)
+                                })
+                        })
+                    .chain(
+                        attr_set.entries()
+                            .map(|entry| {
+                                let key = entry.key()
+                                    .expect("entry.key")
+                                    .path().next()
+                                    .expect("key.path.next");
+                                let name = Ident::cast(key)
+                                    .expect("Ident::cast");
+                                Binding::new(name, entry.node().clone(), false)
+                            })
+                    )
+                ),
         }
     }
 
@@ -157,6 +194,16 @@ impl Scope {
                                 .map(|entry| entry.node().clone())
                         )
                         .chain(let_in.body())
+                ),
+
+            Scope::RecAttrSet(attr_set) =>
+                Box::new(
+                    attr_set.inherits()
+                        .map(|inherit| inherit.node().clone())
+                        .chain(
+                            attr_set.entries()
+                                .map(|entry| entry.node().clone())
+                        )
                 ),
         }
     }
