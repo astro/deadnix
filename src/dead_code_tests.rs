@@ -158,3 +158,9 @@ fn looped() {
 //     assert_eq!(1, results.len());
 //     assert_eq!(results[0].binding.name.as_str(), "dead");
 // }
+
+#[test]
+fn let_inherit_in_rec_attrset_alive() {
+    let results = run("let alive = true; in rec { inherit alive; }");
+    assert_eq!(0, results.len());
+}
