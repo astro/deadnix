@@ -104,8 +104,8 @@ fn scan(node: SyntaxNode<NixLanguage>, dead: &mut HashMap<SyntaxNode<NixLanguage
                 }
             }
 
-            Scope::LambdaArg(_, _) => {
-                replacement = Some("_".to_string());
+            Scope::LambdaArg(name, _) => {
+                replacement = Some(format!("_{}", name.as_str()));
             }
 
             Scope::LetIn(let_in) => {

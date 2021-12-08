@@ -100,7 +100,13 @@ fn lambda_arg_alive() {
 #[test]
 fn lambda_arg_dead() {
     let results = run("dead: false");
-    assert_eq!(results, "_: false");
+    assert_eq!(results, "_dead: false");
+}
+
+#[test]
+fn lambda_arg_anon() {
+    let results = run("_anon: false");
+    assert_eq!(results, "_anon: false");
 }
 
 #[test]
