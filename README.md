@@ -7,7 +7,7 @@ Scan `.nix` files for dead code (unused variable bindings).
 ### Help
 
 ```
-$ nix run github:astro/deadnix test.nix -- --help
+$ nix run github:astro/deadnix -- --help
 ```
 
 ```
@@ -72,7 +72,7 @@ test.nix:13:
 *Do commit* your changes into version control *before!*
 
 ```
-$ nix run github:astro/deadnix -eq test.nix
+$ nix run github:astro/deadnix -- -eq test.nix
 ```
 
 ## What if the produced reports are wrong?
