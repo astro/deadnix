@@ -160,14 +160,18 @@ impl Scope {
                         })
                     .chain(
                         attr_set.entries()
-                            .map(|entry| {
+                            .filter_map(|entry| {
                                 let key = entry.key()
                                     .expect("entry.key")
                                     .path().next()
                                     .expect("key.path.next");
-                                let name = Ident::cast(key)
-                                    .expect("Ident::cast");
-                                Binding::new(name, entry.node().clone(), false)
+                                if key.kind() == SyntaxKind::NODE_IDENT {
+                                    let name = Ident::cast(key)
+                                        .expect("Ident::cast");
+                                    Some(Binding::new(name, entry.node().clone(), false))
+                                } else {
+                                    None
+                                }
                             })
                     )
                 ),
