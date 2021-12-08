@@ -6,6 +6,8 @@ mod usage;
 mod dead_code;
 mod dead_code_tests;
 mod report;
+mod edit;
+mod edit_tests;
 
 
 fn main() {
@@ -28,6 +30,11 @@ fn main() {
              .long("quiet")
              .help("Don't print dead code report")
         )
+        .arg(clap::Arg::with_name("EDIT")
+             .short("e")
+             .long("edit")
+             .help("Remove unused code and write to source file")
+        )
         .arg(clap::Arg::with_name("FILE_PATHS")
              .multiple(true)
              .help(".nix files")
@@ -39,6 +46,7 @@ fn main() {
         no_underscore: matches.is_present("NO_UNDERSCORE"),
     };
     let quiet = matches.is_present("QUIET");
+    let edit = matches.is_present("EDIT");
 
     let file_paths = matches.values_of("FILE_PATHS")
         .expect("FILE_PATHS");
@@ -65,6 +73,15 @@ fn main() {
         if !quiet && results.len() > 0 {
             crate::report::Report::new(file_path.to_string(), &content, results.clone())
                 .print();
+        }
+        if edit {
+            let new_ast = crate::edit::edit_dead_code(
+                &content,
+                ast.node(),
+                results.into_iter()
+            );
+            fs::write(file_path, new_ast)
+                .expect("fs::write");
         }
     }
 }
