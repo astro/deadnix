@@ -22,7 +22,7 @@ pub struct DeadCode {
 
 impl fmt::Display for DeadCode {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{} {}", self.scope, self.binding.name.as_str())
+        write!(fmt, "Unused {}: {}", self.scope, self.binding.name.as_str())
     }
 }
 

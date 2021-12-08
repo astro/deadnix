@@ -85,7 +85,7 @@ impl Report {
             for result in results.iter().rev() {
                 let range = result.binding.name.node().text_range();
                 let start = usize::from(range.start());
-                println!("> {}Unused {}", &bars[..start - line_start], result);
+                println!("> {}{}", &bars[..start - line_start], result);
             }
         }
     }
