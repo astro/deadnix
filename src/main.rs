@@ -23,6 +23,11 @@ fn main() {
              .long("no-underscore")
              .help("Don't check any bindings that start with a _")
         )
+        .arg(clap::Arg::with_name("QUIET")
+             .short("q")
+             .long("quiet")
+             .help("Don't print dead code report")
+        )
         .arg(clap::Arg::with_name("FILE_PATHS")
              .multiple(true)
              .help(".nix files")
@@ -33,6 +38,7 @@ fn main() {
         no_lambda_arg: matches.is_present("NO_LAMBDA_ARG"),
         no_underscore: matches.is_present("NO_UNDERSCORE"),
     };
+    let quiet = matches.is_present("QUIET");
 
     let file_paths = matches.values_of("FILE_PATHS")
         .expect("FILE_PATHS");
@@ -56,8 +62,8 @@ fn main() {
         }
 
         let results = settings.find_dead_code(ast.node());
-        if results.len() > 0 {
-            crate::report::Report::new(file_path.to_string(), &content, results)
+        if !quiet && results.len() > 0 {
+            crate::report::Report::new(file_path.to_string(), &content, results.clone())
                 .print();
         }
     }
