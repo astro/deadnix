@@ -22,7 +22,7 @@ pub enum Scope {
     LambdaPattern(Pattern, SyntaxNode<NixLanguage>),
     LambdaArg(Ident, SyntaxNode<NixLanguage>),
     LetIn(LetIn),
-    // RecAttrSet(AttrSet),
+    RecAttrSet(AttrSet),
 }
 
 impl fmt::Display for Scope {
@@ -34,8 +34,8 @@ impl fmt::Display for Scope {
                 write!(fmt, "lambda argument"),
             Scope::LetIn(_) =>
                 write!(fmt, "let binding"),
-            // Scope::RecAttrSet(_) =>
-            //     write!(fmt, "rec attrset"),
+            Scope::RecAttrSet(_) =>
+                write!(fmt, "rec attrset"),
         }
     }
 }
@@ -71,15 +71,15 @@ impl Scope {
                 Some(Scope::LetIn(let_in))
             }
 
-            // SyntaxKind::NODE_ATTR_SET => {
-            //     let attr_set = AttrSet::cast(node.clone())
-            //         .expect("AttrSet::cast");
-            //     if attr_set.recursive() {
-            //         Some(Scope::RecAttrSet(attr_set))
-            //     } else {
-            //         None
-            //     }
-            // }
+            SyntaxKind::NODE_ATTR_SET => {
+                let attr_set = AttrSet::cast(node.clone())
+                    .expect("AttrSet::cast");
+                if attr_set.recursive() {
+                    Some(Scope::RecAttrSet(attr_set))
+                } else {
+                    None
+                }
+            }
 
             _ => None
         }
@@ -148,33 +148,33 @@ impl Scope {
                     )
                 ),
 
-            // Scope::RecAttrSet(attr_set) =>
-            //     Box::new(
-            //         attr_set.inherits()
-            //             .flat_map(|inherit| {
-            //                 let binding_node = inherit.node().clone();
-            //                 inherit.idents()
-            //                     .map(move |name| {
-            //                         Binding::new(name, binding_node.clone(), false)
-            //                     })
-            //             })
-            //         .chain(
-            //             attr_set.entries()
-            //                 .filter_map(|entry| {
-            //                     let key = entry.key()
-            //                         .expect("entry.key")
-            //                         .path().next()
-            //                         .expect("key.path.next");
-            //                     if key.kind() == SyntaxKind::NODE_IDENT {
-            //                         let name = Ident::cast(key)
-            //                             .expect("Ident::cast");
-            //                         Some(Binding::new(name, entry.node().clone(), false))
-            //                     } else {
-            //                         None
-            //                     }
-            //                 })
-            //         )
-            //     ),
+            Scope::RecAttrSet(attr_set) =>
+                Box::new(
+                    attr_set.inherits()
+                        .flat_map(|inherit| {
+                            let binding_node = inherit.node().clone();
+                            inherit.idents()
+                                .map(move |name| {
+                                    Binding::new(name, binding_node.clone(), false)
+                                })
+                        })
+                    .chain(
+                        attr_set.entries()
+                            .filter_map(|entry| {
+                                let key = entry.key()
+                                    .expect("entry.key")
+                                    .path().next()
+                                    .expect("key.path.next");
+                                if key.kind() == SyntaxKind::NODE_IDENT {
+                                    let name = Ident::cast(key)
+                                        .expect("Ident::cast");
+                                    Some(Binding::new(name, entry.node().clone(), false))
+                                } else {
+                                    None
+                                }
+                            })
+                    )
+                ),
         }
     }
 
@@ -207,15 +207,15 @@ impl Scope {
                         .chain(let_in.body())
                 ),
 
-            // Scope::RecAttrSet(attr_set) =>
-            //     Box::new(
-            //         attr_set.inherits()
-            //             .map(|inherit| inherit.node().clone())
-            //             .chain(
-            //                 attr_set.entries()
-            //                     .map(|entry| entry.node().clone())
-            //             )
-            //     ),
+            Scope::RecAttrSet(attr_set) =>
+                Box::new(
+                    attr_set.inherits()
+                        .map(|inherit| inherit.node().clone())
+                        .chain(
+                            attr_set.entries()
+                                .map(|entry| entry.node().clone())
+                        )
+                ),
         }
     }
 }
