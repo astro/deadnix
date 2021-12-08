@@ -152,9 +152,9 @@ fn looped() {
     assert_eq!(results[1].binding.name.as_str(), "dead2");
 }
 
-#[test]
-fn rec_attrset_shadowed() {
-    let results = run("let dead = false; in rec { dead = true; alive = dead; }");
-    assert_eq!(1, results.len());
-    assert_eq!(results[0].binding.name.as_str(), "dead");
-}
+// #[test]
+// fn rec_attrset_shadowed() {
+//     let results = run("let dead = false; in rec { dead = true; alive = dead; }");
+//     assert_eq!(1, results.len());
+//     assert_eq!(results[0].binding.name.as_str(), "dead");
+// }

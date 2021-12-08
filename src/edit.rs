@@ -128,7 +128,7 @@ fn scan(node: SyntaxNode<NixLanguage>, dead: &mut HashMap<SyntaxNode<NixLanguage
                 }
             }
 
-            Scope::RecAttrSet(_) => {}
+            // Scope::RecAttrSet(_) => {}
         }
 
         if let Some(replacement) = replacement {
