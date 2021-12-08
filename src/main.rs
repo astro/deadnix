@@ -37,7 +37,7 @@ fn main() {
         )
         .arg(clap::Arg::with_name("FILE_PATHS")
              .multiple(true)
-             .help(".nix files")
+             .help(".nix files, or directories with .nix files inside")
         )
         .get_matches();
 
@@ -50,11 +50,29 @@ fn main() {
 
     let file_paths = matches.values_of("FILE_PATHS")
         .expect("FILE_PATHS");
-    for file_path in file_paths {
-        let content = match fs::read_to_string(&file_path) {
+    let files = file_paths.flat_map(|path| {
+        let meta = fs::metadata(path)
+            .expect("fs::metadata");
+        let files: Box<dyn Iterator<Item = String>> =
+            if meta.is_dir() {
+                Box::new(
+                    walkdir::WalkDir::new(path)
+                        .into_iter()
+                        .map(|result| result.unwrap().path().display().to_string())
+                        .filter(|path| path.ends_with(".nix"))
+                )
+            } else {
+                Box::new(
+                    Some(path.to_string()).into_iter()
+                )
+            };
+        files
+    });
+    for file in files {
+        let content = match fs::read_to_string(&file) {
             Ok(content) => content,
             Err(err) => {
-                eprintln!("Error reading file {}: {}", file_path, err);
+                eprintln!("Error reading file {}: {}", file, err);
                 continue;
             }
         };
@@ -62,7 +80,7 @@ fn main() {
         let ast = rnix::parse(&content);
         let mut failed = false;
         for error in ast.errors() {
-            eprintln!("Error parsing file {}: {}", file_path, error);
+            eprintln!("Error parsing file {}: {}", file, error);
             failed = true;
         }
         if failed {
@@ -71,7 +89,7 @@ fn main() {
 
         let results = settings.find_dead_code(ast.node());
         if !quiet && results.len() > 0 {
-            crate::report::Report::new(file_path.to_string(), &content, results.clone())
+            crate::report::Report::new(file.to_string(), &content, results.clone())
                 .print();
         }
         if edit {
@@ -80,7 +98,7 @@ fn main() {
                 ast.node(),
                 results.into_iter()
             );
-            fs::write(file_path, new_ast)
+            fs::write(file, new_ast)
                 .expect("fs::write");
         }
     }
