@@ -13,6 +13,10 @@ use crate::scope::Scope;
 /// find out if `name` is used in `node`
 pub fn find_usage(name: &Ident, node: SyntaxNode<NixLanguage>) -> bool {
     if let Some(scope) = Scope::new(&node) {
+        if scope.inherits_from(name) {
+            return true;
+        }
+
         for binding in scope.bindings() {
             if binding.name.as_str() == name.as_str() {
                 // shadowed by a a new child scope that redefines the

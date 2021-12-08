@@ -218,4 +218,36 @@ impl Scope {
                 ),
         }
     }
+
+    /// Check the `inherit (var) ...` and `inherit vars` clauses for a
+    /// given `name`.
+    ///
+    /// Although a scope may shadow existing variable bindings, it can
+    /// `inherit` bindings from the outer scope.
+    pub fn inherits_from(&self, name: &Ident) -> bool {
+        match self {
+            Scope::LambdaPattern(_, _) | Scope::LambdaArg(_, _) =>
+                false,
+
+            Scope::LetIn(let_in) =>
+                let_in.inherits().any(|inherit|
+                    inherit.from()
+                        .map(|from|
+                             crate::usage::find_usage(name, from.node().clone())
+                        ).unwrap_or_else(||
+                             crate::usage::find_usage(name, inherit.node().clone())
+                        )
+                ),
+
+            Scope::RecAttrSet(attr_set) =>
+                attr_set.inherits().any(|inherit|
+                    inherit.from()
+                        .map(|from|
+                             crate::usage::find_usage(name, from.node().clone())
+                        ).unwrap_or_else(||
+                             crate::usage::find_usage(name, inherit.node().clone())
+                        )
+                ),
+        }
+    }
 }

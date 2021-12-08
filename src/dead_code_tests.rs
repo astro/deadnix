@@ -160,6 +160,12 @@ fn rec_attrset_shadowed() {
 }
 
 #[test]
+fn let_inherit_in_let_inherit_alive() {
+    let results = run("let alive = true; in let inherit alive; in alive");
+    assert_eq!(0, results.len());
+}
+
+#[test]
 fn let_inherit_in_rec_attrset_alive() {
     let results = run("let alive = true; in rec { inherit alive; }");
     assert_eq!(0, results.len());
