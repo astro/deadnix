@@ -10,6 +10,7 @@ mod report;
 
 fn main() {
     let matches = clap::App::new("deadnix")
+        .version(env!("CARGO_PKG_VERSION"))
         .author("Astro <astro@spaceboyz.net>")
         .about("Find dead code in .nix files")
         .arg(clap::Arg::with_name("NO_LAMBDA_ARG")
