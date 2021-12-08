@@ -69,7 +69,7 @@ test.nix:13:
 
 ### Remove unused code automatically
 
-*Do commit* your changes into version control *before!*
+**Do commit** your changes into version control **before!**
 
 ```
 $ nix run github:astro/deadnix -- -eq test.nix
