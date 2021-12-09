@@ -77,5 +77,6 @@ jobs:
         with:
           command: build --release
       - uses: actions/upload-artifact@v2
-        name: deadnix
-        path: target/release/deadnix
+        with:
+          name: deadnix
+          path: target/release/deadnix
