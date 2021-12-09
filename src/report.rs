@@ -1,5 +1,5 @@
-use rnix::types::TypedNode;
 use crate::dead_code::DeadCode;
+use rnix::types::TypedNode;
 
 pub struct LineReport {
     line_start: usize,
@@ -53,7 +53,13 @@ impl Report {
     }
 
     pub fn print(&self) {
-        for LineReport { line_start, line_number, line, results } in &self.line_reports {
+        for LineReport {
+            line_start,
+            line_number,
+            line,
+            results,
+        } in &self.line_reports
+        {
             // file location
             println!("{}:{}:", self.file_path, line_number);
             // line

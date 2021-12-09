@@ -1,14 +1,9 @@
-use rowan::api::SyntaxNode;
-use rnix::{
-    NixLanguage,
-    SyntaxKind,
-    types::{
-        Ident,
-        TokenWrapper,
-        TypedNode,
-    },
-};
 use crate::scope::Scope;
+use rnix::{
+    types::{Ident, TokenWrapper, TypedNode},
+    NixLanguage, SyntaxKind,
+};
+use rowan::api::SyntaxNode;
 
 /// find out if `name` is used in `node`
 pub fn find(name: &Ident, node: &SyntaxNode<NixLanguage>) -> bool {

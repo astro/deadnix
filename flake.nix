@@ -33,6 +33,8 @@
         cargoTestCommands = x: x ++ [
           # clippy
           ''cargo clippy --all --all-features --tests -- -D clippy::pedantic -D warnings -A clippy::module-name-repetitions''
+          # rustfmt
+          ''cargo fmt -- --check''
         ];
       };
       defaultPackage = packages.deadnix;

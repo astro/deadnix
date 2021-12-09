@@ -1,11 +1,8 @@
-use rowan::api::SyntaxNode;
 use rnix::{
+    types::{Ident, TokenWrapper},
     NixLanguage,
-    types::{
-        Ident,
-        TokenWrapper,
-    },
 };
+use rowan::api::SyntaxNode;
 
 #[derive(Debug, Clone)]
 pub struct Binding {
@@ -16,8 +13,7 @@ pub struct Binding {
 
 impl PartialEq for Binding {
     fn eq(&self, other: &Self) -> bool {
-        self.node == other.node &&
-        self.name.as_str() == other.name.as_str()
+        self.node == other.node && self.name.as_str() == other.name.as_str()
     }
 }
 impl Eq for Binding {}

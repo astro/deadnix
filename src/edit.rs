@@ -1,20 +1,10 @@
-use std::collections::HashMap;
-use rowan::api::SyntaxNode;
+use crate::{dead_code::DeadCode, scope::Scope};
 use rnix::{
-    NixLanguage,
-    SyntaxKind,
-    types::{
-        EntryHolder,
-        Inherit,
-        LetIn,
-        TokenWrapper, TypedNode
-    },
+    types::{EntryHolder, Inherit, LetIn, TokenWrapper, TypedNode},
+    NixLanguage, SyntaxKind,
 };
-use crate::{
-    dead_code::DeadCode,
-    scope::Scope,
-};
-
+use rowan::api::SyntaxNode;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 struct Edit {
@@ -40,8 +30,13 @@ fn apply_edits<'a>(src: &str, edits: impl Iterator<Item = &'a Edit>) -> String {
 /// Deletes `nodes` from content
 ///
 /// assumes `node` to be presorted
-pub fn edit_dead_code(original: &str, node: &SyntaxNode<NixLanguage>, dead: impl Iterator<Item = DeadCode>) -> String {
-    let mut dead = dead.map(|result| (result.binding.node.clone(), result))
+pub fn edit_dead_code(
+    original: &str,
+    node: &SyntaxNode<NixLanguage>,
+    dead: impl Iterator<Item = DeadCode>,
+) -> String {
+    let mut dead = dead
+        .map(|result| (result.binding.node.clone(), result))
         .collect::<HashMap<_, _>>();
     let mut edits = Vec::with_capacity(dead.len());
     scan(node, &mut dead, &mut edits);
@@ -67,7 +62,11 @@ pub fn edit_dead_code(original: &str, node: &SyntaxNode<NixLanguage>, dead: impl
     }
 }
 
-fn scan(node: &SyntaxNode<NixLanguage>, dead: &mut HashMap<SyntaxNode<NixLanguage>, DeadCode>, edits: &mut Vec<Edit>) {
+fn scan(
+    node: &SyntaxNode<NixLanguage>,
+    dead: &mut HashMap<SyntaxNode<NixLanguage>, DeadCode>,
+    edits: &mut Vec<Edit>,
+) {
     if let Some(dead_code) = dead.remove(node) {
         let range = dead_code.binding.node.text_range();
         let mut start = usize::from(range.start());
@@ -107,16 +106,15 @@ fn scan(node: &SyntaxNode<NixLanguage>, dead: &mut HashMap<SyntaxNode<NixLanguag
             }
 
             Scope::LetIn(let_in) => {
-                if let_in.entries().any(|entry|
-                    entry.node() == node
-                ) {
+                if let_in.entries().any(|entry| entry.node() == node) {
                     replacement = Some("".to_string());
-                } else if let Some(inherit) = let_in.inherits().find(|inherit|
-                    inherit.node() == node
-                ) {
-                    if let Some(ident) = inherit.idents().find(|ident|
-                        ident.as_str() == dead_code.binding.name.as_str()
-                    ) {
+                } else if let Some(inherit) =
+                    let_in.inherits().find(|inherit| inherit.node() == node)
+                {
+                    if let Some(ident) = inherit
+                        .idents()
+                        .find(|ident| ident.as_str() == dead_code.binding.name.as_str())
+                    {
                         let range = ident.node().text_range();
                         start = usize::from(range.start());
                         end = usize::from(range.end());
@@ -138,7 +136,8 @@ fn scan(node: &SyntaxNode<NixLanguage>, dead: &mut HashMap<SyntaxNode<NixLanguag
             }
 
             edits.push(Edit {
-                start, end,
+                start,
+                end,
                 replacement,
             });
         }
@@ -154,42 +153,45 @@ fn remove_empty_scopes(node: &SyntaxNode<NixLanguage>, edits: &mut Vec<Edit>) {
     match node.kind() {
         // remove empty `let in` constructs
         SyntaxKind::NODE_LET_IN => {
-            let let_in = LetIn::cast(node.clone())
-                .expect("LetIn::cast");
-            if let_in.inherits().all(|inherit| inherit.idents().next().is_none())
-                && let_in.entries().next().is_none() {
-                    let mut start = usize::from(node.text_range().start());
-                    // remove whitespace before node
-                    if let Some(prev) = node.prev_sibling_or_token() {
-                        if prev.kind() == SyntaxKind::TOKEN_WHITESPACE {
-                            start = usize::from(prev.text_range().start());
-                        }
+            let let_in = LetIn::cast(node.clone()).expect("LetIn::cast");
+            if let_in
+                .inherits()
+                .all(|inherit| inherit.idents().next().is_none())
+                && let_in.entries().next().is_none()
+            {
+                let mut start = usize::from(node.text_range().start());
+                // remove whitespace before node
+                if let Some(prev) = node.prev_sibling_or_token() {
+                    if prev.kind() == SyntaxKind::TOKEN_WHITESPACE {
+                        start = usize::from(prev.text_range().start());
                     }
-                    let end = usize::from(let_in.body().expect("let_in.body").text_range().start());
-                    edits.push(Edit {
-                        start, end,
-                        replacement: "".to_string(),
-                    });
                 }
+                let end = usize::from(let_in.body().expect("let_in.body").text_range().start());
+                edits.push(Edit {
+                    start,
+                    end,
+                    replacement: "".to_string(),
+                });
+            }
         }
 
         // remove empty `inherit;` and `inherit (...);` constructs
         SyntaxKind::NODE_INHERIT => {
-            let inherit = Inherit::cast(node.clone())
-                .expect("Inherit::cast");
+            let inherit = Inherit::cast(node.clone()).expect("Inherit::cast");
             if inherit.idents().next().is_none() {
-                    let mut start = usize::from(node.text_range().start());
-                    // remove whitespace before node
-                    if let Some(prev) = node.prev_sibling_or_token() {
-                        if prev.kind() == SyntaxKind::TOKEN_WHITESPACE {
-                            start = usize::from(prev.text_range().start());
-                        }
+                let mut start = usize::from(node.text_range().start());
+                // remove whitespace before node
+                if let Some(prev) = node.prev_sibling_or_token() {
+                    if prev.kind() == SyntaxKind::TOKEN_WHITESPACE {
+                        start = usize::from(prev.text_range().start());
                     }
-                    let end = usize::from(node.text_range().end());
-                    edits.push(Edit {
-                        start, end,
-                        replacement: "".to_string(),
-                    });
+                }
+                let end = usize::from(node.text_range().end());
+                edits.push(Edit {
+                    start,
+                    end,
+                    replacement: "".to_string(),
+                });
             }
         }
 

@@ -1,18 +1,10 @@
-use std::{
-    collections::HashMap,
-    fmt,
+use crate::{binding::Binding, scope::Scope, usage};
+use rnix::{
+    types::{TokenWrapper, TypedNode},
+    NixLanguage,
 };
 use rowan::api::SyntaxNode;
-use rnix::{
-    NixLanguage,
-    types::{TokenWrapper, TypedNode},
-};
-use crate::{
-    binding::Binding,
-    scope::Scope,
-    usage,
-};
-
+use std::{collections::HashMap, fmt};
 
 #[derive(Debug, Clone)]
 pub struct DeadCode {
@@ -43,34 +35,38 @@ impl Settings {
             self.scan(node, &mut results);
         }
 
-        let mut results = results.into_values()
-            .collect::<Vec<_>>();
-        results.sort_unstable_by_key(|result|
-            result.binding.name.node().text_range().start()
-        );
+        let mut results = results.into_values().collect::<Vec<_>>();
+        results.sort_unstable_by_key(|result| result.binding.name.node().text_range().start());
         results
     }
 
     /// recursively scan the AST, accumulating results
-    fn scan(&self, node: &SyntaxNode<NixLanguage>, results: &mut HashMap<SyntaxNode<NixLanguage>, DeadCode>) {
+    fn scan(
+        &self,
+        node: &SyntaxNode<NixLanguage>,
+        results: &mut HashMap<SyntaxNode<NixLanguage>, DeadCode>,
+    ) {
         // check the scope of this `node`
         if let Some(scope) = Scope::new(node) {
             if !(self.no_lambda_arg && scope.is_lambda_arg()) {
                 for binding in scope.bindings() {
                     if binding.is_mortal()
-                    && !(self.no_underscore && binding.name.as_str().starts_with('_'))
-                    && ! scope.bodies().any(|body|
+                        && !(self.no_underscore && binding.name.as_str().starts_with('_'))
+                        && !scope.bodies().any(|body|
                         // exclude this binding's own node
                         body != binding.node &&
                         // excluding already unused results
                         results.get(&body).is_none() &&
                         // find if used anywhere
-                        usage::find(&binding.name, &body)
-                    ) {
-                        results.insert(binding.node.clone(), DeadCode {
-                            scope: scope.clone(),
-                            binding,
-                        });
+                        usage::find(&binding.name, &body))
+                    {
+                        results.insert(
+                            binding.node.clone(),
+                            DeadCode {
+                                scope: scope.clone(),
+                                binding,
+                            },
+                        );
                     }
                 }
             }

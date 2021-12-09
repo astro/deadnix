@@ -9,19 +9,16 @@ fn run(content: &str) -> String {
     let results = Settings {
         no_lambda_arg: false,
         no_underscore: false,
-    }.find_dead_code(&ast.node());
-    crate::edit::edit_dead_code(
-        content,
-        &ast.node(),
-        results.into_iter()
-    )
+    }
+    .find_dead_code(&ast.node());
+    crate::edit::edit_dead_code(content, &ast.node(), results.into_iter())
 }
 
 macro_rules! no_edits {
     ($s: expr) => {
         let s = $s.to_string();
         assert_eq!(run(&s), s);
-    }
+    };
 }
 
 #[test]
