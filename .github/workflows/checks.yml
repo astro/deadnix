@@ -62,3 +62,20 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build --release
+      - uses: actions/upload-artifact@v2
+        name: deadnix
+        path: target/release/deadnix
