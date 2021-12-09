@@ -53,7 +53,7 @@ impl Report {
     }
 
     pub fn print(&self) {
-        for LineReport { line_start, line_number, line, results } in self.line_reports.iter() {
+        for LineReport { line_start, line_number, line, results } in &self.line_reports {
             // file location
             println!("{}:{}:", self.file_path, line_number);
             // line
@@ -69,7 +69,7 @@ impl Report {
                 print!("{0: <1$}{2:^<3$}", "", start - pos, "", end - start);
                 pos = end;
             }
-            println!("");
+            println!();
 
             let mut bars = String::new();
             let mut pos = *line_start;

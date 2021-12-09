@@ -14,7 +14,10 @@
         channel = "stable";
         date = "2021-12-02";
         sha256 = "0rqgx90k9lhfwaf63ccnm5qskzahmr4q18i18y6kdx48y26w3xz8";
-      }).rust;
+      }).rust.override {
+        #extensions = [ "clippy-preview" "rustfmt-preview" "miri-preview" ];
+        extensions = [ "clippy-preview" "rustfmt-preview" ];
+      };
 
       # Override the version used in naersk
       naersk-lib = naersk.lib."${system}".override {
@@ -27,6 +30,10 @@
         pname = "deadnix";
         src = ./.;
         doCheck = true;
+        cargoTestCommands = x: x ++ [
+          # clippy
+          ''cargo clippy --all --all-features --tests -- -D clippy::pedantic -D warnings -A clippy::module-name-repetitions''
+        ];
       };
       defaultPackage = packages.deadnix;
 

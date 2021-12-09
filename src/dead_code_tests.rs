@@ -4,13 +4,13 @@ use rnix::types::TokenWrapper;
 use crate::dead_code::{DeadCode, Settings};
 
 fn run(content: &str) -> Vec<DeadCode> {
-    let ast = rnix::parse(&content);
+    let ast = rnix::parse(content);
     assert_eq!(0, ast.errors().len());
 
     Settings {
         no_lambda_arg: false,
         no_underscore: false,
-    }.find_dead_code(ast.node())
+    }.find_dead_code(&ast.node())
 }
 
 #[test]

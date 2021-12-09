@@ -59,7 +59,7 @@ fn main() {
                     walkdir::WalkDir::new(path)
                         .into_iter()
                         .map(|result| result.unwrap().path().display().to_string())
-                        .filter(|path| path.ends_with(".nix"))
+                        .filter(|path| path.rsplit('.').next().map(|ext| ext.eq_ignore_ascii_case("nix")) == Some(true))
                 )
             } else {
                 Box::new(
@@ -87,15 +87,15 @@ fn main() {
             continue;
         }
 
-        let results = settings.find_dead_code(ast.node());
-        if !quiet && results.len() > 0 {
+        let results = settings.find_dead_code(&ast.node());
+        if !quiet && !results.is_empty() {
             crate::report::Report::new(file.to_string(), &content, results.clone())
                 .print();
         }
         if edit {
             let new_ast = crate::edit::edit_dead_code(
                 &content,
-                ast.node(),
+                &ast.node(),
                 results.into_iter()
             );
             fs::write(file, new_ast)

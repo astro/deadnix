@@ -11,8 +11,8 @@ use rnix::{
 use crate::scope::Scope;
 
 /// find out if `name` is used in `node`
-pub fn find_usage(name: &Ident, node: SyntaxNode<NixLanguage>) -> bool {
-    if let Some(scope) = Scope::new(&node) {
+pub fn find(name: &Ident, node: &SyntaxNode<NixLanguage>) -> bool {
+    if let Some(scope) = Scope::new(node) {
         if scope.inherits_from(name) {
             return true;
         }
@@ -27,8 +27,8 @@ pub fn find_usage(name: &Ident, node: SyntaxNode<NixLanguage>) -> bool {
     }
 
     if node.kind() == SyntaxKind::NODE_IDENT {
-        Ident::cast(node).expect("Ident::cast").as_str() == name.as_str()
+        Ident::cast(node.clone()).expect("Ident::cast").as_str() == name.as_str()
     } else {
-        node.children().any(|node| find_usage(name, node))
+        node.children().any(|node| find(name, &node))
     }
 }

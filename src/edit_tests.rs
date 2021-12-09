@@ -3,16 +3,16 @@
 use crate::dead_code::Settings;
 
 fn run(content: &str) -> String {
-    let ast = rnix::parse(&content);
+    let ast = rnix::parse(content);
     assert_eq!(0, ast.errors().len());
 
     let results = Settings {
         no_lambda_arg: false,
         no_underscore: false,
-    }.find_dead_code(ast.node());
+    }.find_dead_code(&ast.node());
     crate::edit::edit_dead_code(
         content,
-        ast.node(),
+        &ast.node(),
         results.into_iter()
     )
 }

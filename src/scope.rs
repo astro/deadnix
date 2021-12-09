@@ -14,7 +14,10 @@ use rnix::{
         TypedNode,
     },
 };
-use crate::binding::Binding;
+use crate::{
+    binding::Binding,
+    usage,
+};
 
 /// AST subtree that declares variables
 #[derive(Debug, Clone)]
@@ -52,7 +55,7 @@ impl Scope {
                     .expect("lambda.body()");
                 match arg.kind() {
                     SyntaxKind::NODE_IDENT => {
-                        let name = Ident::cast(arg.clone())
+                        let name = Ident::cast(arg)
                             .expect("Ident::cast");
                         Some(Scope::LambdaArg(name, body))
                     }
@@ -86,10 +89,7 @@ impl Scope {
     }
 
     pub fn is_lambda_arg(&self) -> bool {
-        match self {
-            Scope::LambdaArg(_, _) => true,
-            _ => false,
-        }
+        matches!(self, Scope::LambdaArg(_, _))
     }
 
     /// The Bindings this Scope introduces
@@ -116,7 +116,7 @@ impl Scope {
             }
 
             Scope::LambdaArg(name, _) => {
-                let mortal = ! name.as_str().starts_with("_");
+                let mortal = ! name.as_str().starts_with('_');
                 Box::new(
                     Some(
                         Binding::new(name.clone(), name.node().clone(), mortal)
@@ -179,7 +179,8 @@ impl Scope {
     }
 
     /// The code subtrees in which the introduced variables are available
-    /// TODO: return &SyntaxNode
+    ///
+    /// TODO: return `&SyntaxNode`
     pub fn bodies(&self) -> Box<dyn Iterator<Item = SyntaxNode<NixLanguage>>> {
         match self {
             Scope::LambdaPattern(pattern, body) =>
@@ -232,20 +233,18 @@ impl Scope {
             Scope::LetIn(let_in) =>
                 let_in.inherits().any(|inherit|
                     inherit.from()
-                        .map(|from|
-                             crate::usage::find_usage(name, from.node().clone())
-                        ).unwrap_or_else(||
-                             crate::usage::find_usage(name, inherit.node().clone())
+                        .map_or_else(
+                            || usage::find(name, inherit.node()),
+                            |from| usage::find(name, from.node())
                         )
                 ),
 
             Scope::RecAttrSet(attr_set) =>
                 attr_set.inherits().any(|inherit|
                     inherit.from()
-                        .map(|from|
-                             crate::usage::find_usage(name, from.node().clone())
-                        ).unwrap_or_else(||
-                             crate::usage::find_usage(name, inherit.node().clone())
+                        .map_or_else(
+                            || usage::find(name, inherit.node()),
+                            |from| usage::find(name, from.node())
                         )
                 ),
         }
