@@ -126,6 +126,18 @@ fn lambda_trail_at_dead() {
 }
 
 #[test]
+fn lambda_lead_at_space_dead() {
+    let results = run("dead @ { ... }: false");
+    assert_eq!(results, "{ ... }: false");
+}
+
+#[test]
+fn lambda_trail_at_space_dead() {
+    let results = run("{ ... } @ dead: false");
+    assert_eq!(results, "{ ... }: false");
+}
+
+#[test]
 fn lambda_at_shadowed() {
     let results = run("dead@{ ... }: dead@{ ... }: dead");
     assert_eq!(results, "{ ... }: dead@{ ... }: dead");

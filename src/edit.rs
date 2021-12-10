@@ -76,21 +76,21 @@ fn scan(
         match dead_code.scope {
             Scope::LambdaPattern(pattern, _) => {
                 if pattern.at().map_or(false, |at| at.node() == node) {
-                    if let Some(next) = node.next_sibling_or_token() {
-                        // dead@{ ... } form
-                        if next.kind() == SyntaxKind::TOKEN_AT {
-                            end = usize::from(next.text_range().end());
-                            replacement = Some("".to_string());
-                        }
-                    }
-                    if replacement.is_none() {
-                        if let Some(prev) = node.prev_sibling_or_token() {
-                            // { ... }@dead form
-                            if prev.kind() == SyntaxKind::TOKEN_AT {
-                                start = usize::from(prev.text_range().start());
-                                replacement = Some("".to_string());
+                    if let Some(pattern_bind_node) = pattern.node().children().find(|child|
+                        child.kind() == SyntaxKind::NODE_PAT_BIND
+                    ) {
+                        // `dead @ { ... }`, `{ ... } @ dead` forms
+                        let pattern_bind_range = pattern_bind_node.text_range();
+                        start = usize::from(pattern_bind_range.start());
+                        end = usize::from(pattern_bind_range.end());
+                        // also remove trailing whitespace for this form
+                        if let Some(next) = pattern_bind_node.next_sibling_or_token() {
+                            if next.kind() == SyntaxKind::TOKEN_WHITESPACE {
+                                end = usize::from(next.text_range().end());
                             }
                         }
+                        replacement = Some("".to_string());
+                        replace_node = pattern_bind_node;
                     }
                 } else if let Some(next) = node.next_sibling_or_token() {
                     // { dead, ... } form
