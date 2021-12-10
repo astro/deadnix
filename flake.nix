@@ -14,7 +14,6 @@
         "cargo"
         "rustc"
         "rust-src"  # just for rust-analyzer
-        "rustfmt"
         "clippy"
       ];
 
@@ -32,8 +31,6 @@
         cargoTestCommands = x: x ++ [
           # clippy
           ''cargo clippy --all --all-features --tests -- -D clippy::pedantic -D warnings -A clippy::module-name-repetitions''
-          # rustfmt
-          ''cargo fmt -- --check''
         ];
       };
       defaultPackage = packages.deadnix;
