@@ -28,10 +28,16 @@
         pname = "deadnix";
         src = ./.;
         doCheck = true;
-        cargoTestCommands = x: x ++ [
-          # clippy
-          ''cargo clippy --all --all-features --tests -- -D clippy::pedantic -D warnings -A clippy::module-name-repetitions''
-        ];
+        cargoTestCommands = x:
+          x ++ [
+            # clippy
+            ''cargo clippy --all --all-features --tests -- \
+              -D clippy::pedantic \
+              -D warnings \
+              -A clippy::module-name-repetitions \
+              -A clippy::too-many-lines \
+              -A clippy::nonminimal_bool''
+          ];
       };
       defaultPackage = packages.deadnix;
 

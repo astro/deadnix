@@ -69,8 +69,7 @@ fn main() {
     } else {
         |entry: &walkdir::DirEntry| entry.file_name()
             .to_str()
-            .map(|s| s == "." || ! s.starts_with("."))
-            .unwrap_or(false)
+            .map_or(false, |s| s == "." || ! s.starts_with('.'))
     };
 
     let file_paths = matches.values_of("FILE_PATHS").expect("FILE_PATHS");
