@@ -67,6 +67,7 @@ test.nix:13:
 >         Unused lambda pattern: unusedArg2
 ```
 
+
 ### Remove unused code automatically
 
 **Do commit** your changes into version control **before!**
@@ -74,6 +75,27 @@ test.nix:13:
 ```
 $ nix run github:astro/deadnix -- -eq test.nix
 ```
+
+## Behavior
+
+### Renaming of all unused to lambda args to start with `_`
+
+If you disfavor marking them as unused, use option `--no-lambda-arg`.
+
+
+### nixpkgs `callPackages` with multiple imports
+
+`callPackages` guesses the packages to inject by the names of a
+packages' lambda attrset pattern names. Some packages alias these with
+`@args` to pass them to another `import ...nix args`.
+
+As the used args are only named in the imported file they will be
+recognized as dead in the package source file that is imported by
+`callPackage`, rendering it unable to guess the dependencies to call
+the packages with.
+
+Use option `--no-lambda-pattern-names` in this case.
+
 
 ## What if the produced reports are wrong?
 

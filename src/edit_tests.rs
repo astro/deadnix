@@ -8,6 +8,7 @@ fn run(content: &str) -> String {
 
     let results = Settings {
         no_lambda_arg: false,
+        no_lambda_pattern_names: false,
         no_underscore: false,
     }
     .find_dead_code(&ast.node());

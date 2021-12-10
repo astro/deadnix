@@ -69,6 +69,16 @@ impl Scope {
         matches!(self, Scope::LambdaArg(_, _))
     }
 
+    pub fn is_lambda_pattern_name(&self, name: &Ident) -> bool {
+        if let Scope::LambdaPattern(pattern, _) = self {
+            pattern.entries().any(|entry|
+                entry.name().expect("entry.name").as_str() == name.as_str()
+            )
+        } else {
+            false
+        }
+    }
+
     /// The Bindings this Scope introduces
     pub fn bindings(&self) -> Box<dyn Iterator<Item = Binding>> {
         match self {

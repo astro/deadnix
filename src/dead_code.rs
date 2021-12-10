@@ -21,6 +21,7 @@ impl fmt::Display for DeadCode {
 #[derive(Debug, Clone)]
 pub struct Settings {
     pub no_lambda_arg: bool,
+    pub no_lambda_pattern_names: bool,
     pub no_underscore: bool,
 }
 
@@ -51,15 +52,16 @@ impl Settings {
             if !(self.no_lambda_arg && scope.is_lambda_arg()) {
                 for binding in scope.bindings() {
                     if binding.is_mortal()
-                        && !(self.no_underscore && binding.name.as_str().starts_with('_'))
-                        && !scope.bodies().any(|body|
+                    && !(self.no_underscore && binding.name.as_str().starts_with('_'))
+                    && !(self.no_lambda_pattern_names && scope.is_lambda_pattern_name(&binding.name))
+                    && !scope.bodies().any(|body|
                         // exclude this binding's own node
                         body != binding.node &&
                         // excluding already unused results
                         results.get(&body).is_none() &&
                         // find if used anywhere
-                        usage::find(&binding.name, &body))
-                    {
+                        usage::find(&binding.name, &body)
+                    ) {
                         results.insert(
                             binding.node.clone(),
                             DeadCode {

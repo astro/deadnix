@@ -21,6 +21,12 @@ fn main() {
                 .help("Don't check lambda parameter arguments"),
         )
         .arg(
+            clap::Arg::with_name("NO_LAMBDA_PATTERN_NAMES")
+                .short("L")
+                .long("no-lambda-pattern-names")
+                .help("Don't check lambda attrset pattern names (don't break nixpkgs callPackage)"),
+        )
+        .arg(
             clap::Arg::with_name("NO_UNDERSCORE")
                 .short("_")
                 .long("no-underscore")
@@ -53,6 +59,7 @@ fn main() {
 
     let settings = dead_code::Settings {
         no_lambda_arg: matches.is_present("NO_LAMBDA_ARG"),
+        no_lambda_pattern_names: matches.is_present("NO_LAMBDA_PATTERN_NAMES"),
         no_underscore: matches.is_present("NO_UNDERSCORE"),
     };
     let quiet = matches.is_present("QUIET");
