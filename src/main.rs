@@ -39,6 +39,12 @@ fn main() {
                 .help("Remove unused code and write to source file"),
         )
         .arg(
+            clap::Arg::with_name("HIDDEN")
+                .short("h")
+                .long("hidden")
+                .help("Recurse into hidden subdirectories and process hidden .*.nix files"),
+        )
+        .arg(
             clap::Arg::with_name("FILE_PATHS")
                 .multiple(true)
                 .help(".nix files, or directories with .nix files inside"),
@@ -51,6 +57,14 @@ fn main() {
     };
     let quiet = matches.is_present("QUIET");
     let edit = matches.is_present("EDIT");
+    let is_visible = if matches.is_present("HIDDEN") {
+        |_: &walkdir::DirEntry| true
+    } else {
+        |entry: &walkdir::DirEntry| entry.file_name()
+            .to_str()
+            .map(|s| s == "." || ! s.starts_with("."))
+            .unwrap_or(false)
+    };
 
     let file_paths = matches.values_of("FILE_PATHS").expect("FILE_PATHS");
     let files = file_paths.flat_map(|path| {
@@ -58,6 +72,8 @@ fn main() {
         let files: Box<dyn Iterator<Item = String>> = if meta.is_dir() {
             Box::new(
                 walkdir::WalkDir::new(path)
+                    .into_iter()
+                    .filter_entry(is_visible)
                     .into_iter()
                     .map(|result| result.unwrap().path().display().to_string())
                     .filter(|path| {
