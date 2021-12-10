@@ -13,6 +13,7 @@
       rust = fenix.packages.${system}.stable.withComponents [
         "cargo"
         "rustc"
+        "rust-src"  # just for rust-analyzer
         "rustfmt"
         "clippy"
       ];
@@ -47,8 +48,10 @@
 
       # `nix develop`
       devShell = pkgs.mkShell {
-        nativeBuildInputs = with defaultPackage;
-          nativeBuildInputs ++ buildInputs;
+        nativeBuildInputs = [
+          fenix.packages.${system}.rust-analyzer
+        ] ++
+        (with defaultPackage; nativeBuildInputs ++ buildInputs);
       };
     }) // {
       overlay = final: prev: {
