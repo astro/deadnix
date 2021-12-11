@@ -53,21 +53,20 @@ impl Settings {
         if let Some(scope) = Scope::new(node) {
             if !(self.no_lambda_arg && scope.is_lambda_arg()) {
                 for binding in scope.bindings() {
-                    let name_node = binding.name.node();
                     if binding.is_mortal()
                     && !(self.no_underscore && binding.name.as_str().starts_with('_'))
                     && !(self.no_lambda_pattern_names && scope.is_lambda_pattern_name(&binding.name))
                     && !scope.bodies().any(|body| {
                         // exclude this binding's own node
-                        body != binding.node &&
+                        body != binding.body_node &&
                         // excluding already unused results
                         dead.get(&body).is_none() &&
                         // find if used anywhere
                         usage::find(&binding.name, &body)
                     }) {
-                        dead.insert(binding.node.clone());
+                        dead.insert(binding.body_node.clone());
                         results.insert(
-                            binding.name.node().clone(),
+                            binding.decl_node.clone(),
                             DeadCode {
                                 scope: scope.clone(),
                                 binding,

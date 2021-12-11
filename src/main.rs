@@ -118,7 +118,7 @@ fn main() {
             crate::report::Report::new(file.to_string(), &content, results.clone()).print();
         }
         if edit {
-            let new_ast = crate::edit::edit_dead_code(&content, &ast.node(), results.into_iter());
+            let new_ast = crate::edit::edit_dead_code(&content, results.into_iter());
             fs::write(file, new_ast).expect("fs::write");
         }
     }

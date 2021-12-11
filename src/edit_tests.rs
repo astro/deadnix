@@ -12,7 +12,7 @@ fn run(content: &str) -> String {
         no_underscore: false,
     }
     .find_dead_code(&ast.node());
-    crate::edit::edit_dead_code(content, &ast.node(), results.into_iter())
+    crate::edit::edit_dead_code(content, results.into_iter())
 }
 
 macro_rules! no_edits {
@@ -68,6 +68,12 @@ fn let_inherit_in_dead_only() {
 }
 
 #[test]
+fn let_inherit_multi_in_dead_only() {
+    let results = run("let inherit dead1 dead2 dead3; in alive");
+    assert_eq!(results, "alive");
+}
+
+#[test]
 fn let_inherit_from_in_alive() {
     no_edits!("let inherit (x) alive; in alive");
 }
@@ -87,6 +93,12 @@ fn let_inherit_from_dead_let_alive_in_dead() {
 #[test]
 fn let_inherit_from_in_dead_only() {
     let results = run("let inherit (x) dead; in alive");
+    assert_eq!(results, "alive");
+}
+
+#[test]
+fn let_inherit_from_multi_in_dead_only() {
+    let results = run("let inherit (grave) dead1 dead2 dead3; in alive");
     assert_eq!(results, "alive");
 }
 

@@ -89,33 +89,36 @@ impl Scope {
                         .at()
                         .map(|name| {
                             let binding_node = name.node().clone();
-                            Binding::new(name, binding_node, true)
+                            Binding::new(name, binding_node.clone(), binding_node, true)
                         })
                         .into_iter()
                         .chain(pattern.entries().map(move |entry| {
                             let name = entry.name().expect("entry.name");
-                            Binding::new(name, entry.node().clone(), mortal)
+                            Binding::new(name, entry.node().clone(), entry.node().clone(), mortal)
                         })),
                 )
             }
 
             Scope::LambdaArg(name, _) => {
                 let mortal = !name.as_str().starts_with('_');
-                Box::new(Some(Binding::new(name.clone(), name.node().clone(), mortal)).into_iter())
+                Box::new(Some(Binding::new(name.clone(), name.node().clone(), name.node().clone(), mortal)).into_iter())
             }
 
             Scope::LetIn(let_in) => Box::new(
                 let_in
                     .inherits()
                     .flat_map(|inherit| {
-                        let binding_node = if let Some(from) = inherit.from() {
+                        let body_node = if let Some(from) = inherit.from() {
                             from.node().clone()
                         } else {
                             inherit.node().clone()
                         };
                         inherit
                             .idents()
-                            .map(move |name| Binding::new(name, binding_node.clone(), true))
+                            .map(move |name| {
+                                let name_node = name.node().clone();
+                                Binding::new(name, body_node.clone(), name_node, true)
+                            })
                     })
                     .chain(let_in.entries().map(|entry| {
                         let key = entry
@@ -125,7 +128,7 @@ impl Scope {
                             .next()
                             .expect("key.path.next");
                         let name = Ident::cast(key).expect("Ident::cast");
-                        Binding::new(name, entry.node().clone(), true)
+                        Binding::new(name, entry.node().clone(), entry.node().clone(), true)
                     })),
             ),
 
@@ -136,7 +139,10 @@ impl Scope {
                         let binding_node = inherit.node().clone();
                         inherit
                             .idents()
-                            .map(move |name| Binding::new(name, binding_node.clone(), false))
+                            .map(move |name| {
+                                let name_node = name.node().clone();
+                                Binding::new(name, binding_node.clone(), name_node, false)
+                            })
                     })
                     .chain(attr_set.entries().filter_map(|entry| {
                         let key = entry
@@ -147,7 +153,7 @@ impl Scope {
                             .expect("key.path.next");
                         if key.kind() == SyntaxKind::NODE_IDENT {
                             let name = Ident::cast(key).expect("Ident::cast");
-                            Some(Binding::new(name, entry.node().clone(), false))
+                            Some(Binding::new(name, entry.node().clone(), entry.node().clone(), false))
                         } else {
                             None
                         }
