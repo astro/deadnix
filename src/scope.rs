@@ -108,7 +108,11 @@ impl Scope {
                 let_in
                     .inherits()
                     .flat_map(|inherit| {
-                        let binding_node = inherit.node().clone();
+                        let binding_node = if let Some(from) = inherit.from() {
+                            from.node().clone()
+                        } else {
+                            inherit.node().clone()
+                        };
                         inherit
                             .idents()
                             .map(move |name| Binding::new(name, binding_node.clone(), true))
@@ -169,7 +173,7 @@ impl Scope {
             Scope::LetIn(let_in) => Box::new(
                 let_in
                     .inherits()
-                    .map(|inherit| inherit.node().clone())
+                    .filter_map(|inherit| inherit.from().map(|from| from.node().clone()))
                     .chain(let_in.entries().map(|entry| entry.node().clone()))
                     .chain(let_in.body()),
             ),

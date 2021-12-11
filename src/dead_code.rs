@@ -4,7 +4,7 @@ use rnix::{
     NixLanguage,
 };
 use rowan::api::SyntaxNode;
-use std::{collections::HashMap, fmt};
+use std::{collections::{HashMap, HashSet}, fmt};
 
 #[derive(Debug, Clone)]
 pub struct DeadCode {
@@ -27,13 +27,14 @@ pub struct Settings {
 
 impl Settings {
     pub fn find_dead_code(&self, node: &SyntaxNode<NixLanguage>) -> Vec<DeadCode> {
+        let mut dead = HashSet::new();
         let mut results = HashMap::new();
         // loop so that bodies are ignored that were detected as dead in a
         // previous iteration
         let mut prev_results_len = 1;
         while prev_results_len != results.len() {
             prev_results_len = results.len();
-            self.scan(node, &mut results);
+            self.scan(node, &mut dead, &mut results);
         }
 
         let mut results = results.into_values().collect::<Vec<_>>();
@@ -45,25 +46,28 @@ impl Settings {
     fn scan(
         &self,
         node: &SyntaxNode<NixLanguage>,
+        dead: &mut HashSet<SyntaxNode<NixLanguage>>,
         results: &mut HashMap<SyntaxNode<NixLanguage>, DeadCode>,
     ) {
         // check the scope of this `node`
         if let Some(scope) = Scope::new(node) {
             if !(self.no_lambda_arg && scope.is_lambda_arg()) {
                 for binding in scope.bindings() {
+                    let name_node = binding.name.node();
                     if binding.is_mortal()
                     && !(self.no_underscore && binding.name.as_str().starts_with('_'))
                     && !(self.no_lambda_pattern_names && scope.is_lambda_pattern_name(&binding.name))
-                    && !scope.bodies().any(|body|
+                    && !scope.bodies().any(|body| {
                         // exclude this binding's own node
                         body != binding.node &&
                         // excluding already unused results
-                        results.get(&body).is_none() &&
+                        dead.get(&body).is_none() &&
                         // find if used anywhere
                         usage::find(&binding.name, &body)
-                    ) {
+                    }) {
+                        dead.insert(binding.node.clone());
                         results.insert(
-                            binding.node.clone(),
+                            binding.name.node().clone(),
                             DeadCode {
                                 scope: scope.clone(),
                                 binding,
@@ -76,7 +80,7 @@ impl Settings {
 
         // recurse through the AST
         for child in node.children() {
-            self.scan(&child, results);
+            self.scan(&child, dead, results);
         }
     }
 }

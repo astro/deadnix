@@ -35,6 +35,24 @@ fn let_in_dead() {
 }
 
 #[test]
+fn let_in_dead_multi() {
+    let results = run("let dead1 = 23; dead2 = 5; dead3 = 42; in false");
+    assert_eq!(3, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead1");
+    assert_eq!(results[1].binding.name.as_str(), "dead2");
+    assert_eq!(results[2].binding.name.as_str(), "dead3");
+}
+
+#[test]
+fn let_in_dead_multi_recursive() {
+    let results = run("let dead1 = dead2; dead2 = dead3; dead3 = 42; in false");
+    assert_eq!(3, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead1");
+    assert_eq!(results[1].binding.name.as_str(), "dead2");
+    assert_eq!(results[2].binding.name.as_str(), "dead3");
+}
+
+#[test]
 fn let_in_dead_recursive() {
     let results = run("let dead = dead; in false");
     assert_eq!(1, results.len());
@@ -59,6 +77,24 @@ fn let_in_inherit_dead() {
     let results = run("let inherit (alive) dead; in alive");
     assert_eq!(1, results.len());
     assert_eq!(results[0].binding.name.as_str(), "dead");
+}
+
+#[test]
+fn let_in_inherit_dead_multi() {
+    let results = run("let inherit (grave) dead1 dead2 dead3; in false");
+    assert_eq!(3, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead1");
+    assert_eq!(results[1].binding.name.as_str(), "dead2");
+    assert_eq!(results[2].binding.name.as_str(), "dead3");
+}
+
+#[test]
+fn let_in_inherit_dead_recursive_multi() {
+    let results = run("let inherit (grave) dead1; inherit (dead1) dead2; inherit (dead2) dead3; in false");
+    assert_eq!(3, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead1");
+    assert_eq!(results[1].binding.name.as_str(), "dead2");
+    assert_eq!(results[2].binding.name.as_str(), "dead3");
 }
 
 #[test]
