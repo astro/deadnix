@@ -66,7 +66,7 @@ checksum = "328b822bdcba4d4e402be8d9adb6eebf269f969f8eadef977a553ff3c4fbcb58"
 
 [[package]]
 name = "deadnix"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "rnix",
@@ -115,9 +115,9 @@ dependencies = [
 
 [[package]]
 name = "rnix"
-version = "0.10.0"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61f259c8a68822e61b46f7417158b7e70297aa8c0a45955aba49cd6fec9fd3e1"
+checksum = "065c5eac8e8f7e7b0e7227bdc46e2d8dd7d69fff7a9a2734e21f686bbcb9b2c9"
 dependencies = [
  "cbitset",
  "rowan",
@@ -154,9 +154,9 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.130"
+version = "1.0.131"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f12d06de37cf59146fbdecab66aa99f9fe4f78722e3607577a5375d66bd0c913"
+checksum = "b4ad69dfbd3e45369132cc64e6748c2d65cdfb001a2b1c232d128b4ad60561c1"
 
 [[package]]
 name = "smol_str"
