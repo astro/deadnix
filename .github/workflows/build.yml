@@ -34,3 +34,4 @@ jobs:
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: List flake structure
         run: nix flake show
+      - run: nix flake check -vL
