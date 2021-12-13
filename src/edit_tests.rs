@@ -162,7 +162,19 @@ fn lambda_pattern_dead() {
 }
 
 #[test]
+fn lambda_pattern_default_dead() {
+    let results = run("alive@{ dead ? true, ... }: alive");
+    assert_eq!(results, "alive@{ ... }: alive");
+}
+
+#[test]
 fn lambda_pattern_mixed() {
     let results = run("dead1@{ dead2, alive, ... }: alive");
     assert_eq!(results, "{ alive, ... }: alive");
+}
+
+#[test]
+fn lambda_pattern_dead_multiline() {
+    let results = run("{ alive\n, dead\n, ... }:\nalive");
+    assert_eq!(results, "{ alive\n, ... }:\nalive");
 }

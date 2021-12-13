@@ -83,11 +83,24 @@ fn dead_to_edit(
                     replacement = Some("".to_string());
                     replace_node = pattern_bind_node;
                 }
-            } else if let Some(next) = dead_code.binding.decl_node.next_sibling_or_token() {
-                // { dead, ... } form
-                if next.kind() == SyntaxKind::TOKEN_COMMA {
-                    end = usize::from(next.text_range().end());
-                    replacement = Some("".to_string());
+            } else {
+                let mut tokens = pattern.node().children_with_tokens()
+                    .skip_while(|node|
+                        node.as_node().map_or(true, |node|
+                            *node != dead_code.binding.decl_node
+                        )
+                    );
+                tokens.next();
+                for token in tokens {
+                    if token.kind() == SyntaxKind::TOKEN_COMMA {
+                        // up to the next comma
+                        end = usize::from(token.text_range().end());
+                        replacement = Some("".to_string());
+                        break;
+                    } else if token.kind() != SyntaxKind::TOKEN_WHITESPACE {
+                        // delete only whitespace
+                        break;
+                    }
                 }
             }
         }
