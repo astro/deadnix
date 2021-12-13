@@ -32,4 +32,6 @@ jobs:
         with:
           name: deadnix
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - run: nix build -vL
+      - name: List flake structure
+        run: nix flake show
+      - run: nix flake check -vL
