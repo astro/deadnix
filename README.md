@@ -2,6 +2,11 @@
 
 Scan `.nix` files for dead code (unused variable bindings).
 
+## Usage with Github Actions
+
+See [deadnix-action](https://github.com/astro/deadnix-action)
+
+
 ## Usage with Nix Flakes
 
 ### Help
