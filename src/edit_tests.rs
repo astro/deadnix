@@ -73,6 +73,13 @@ fn let_inherit_multi_in_dead_only() {
     assert_eq!(results, "alive");
 }
 
+/// <https://github.com/astro/deadnix/issues/7>
+#[test]
+fn let_dead_only_whitespacing() {
+    let results = run("{ used }: let unused = {}; in used");
+    assert_eq!(results, "{ used }: used");
+}
+
 #[test]
 fn let_inherit_from_in_alive() {
     no_edits!("let inherit (x) alive; in alive");

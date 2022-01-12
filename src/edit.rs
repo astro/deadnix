@@ -153,13 +153,7 @@ fn remove_empty_scopes(node: &SyntaxNode<NixLanguage>, edits: &mut Vec<Edit>) {
                 .all(|inherit| inherit.idents().next().is_none())
                 && let_in.entries().next().is_none()
             {
-                let mut start = usize::from(node.text_range().start());
-                // remove whitespace before node
-                if let Some(prev) = node.prev_sibling_or_token() {
-                    if prev.kind() == SyntaxKind::TOKEN_WHITESPACE {
-                        start = usize::from(prev.text_range().start());
-                    }
-                }
+                let start = usize::from(node.text_range().start());
                 let end = usize::from(let_in.body().expect("let_in.body").text_range().start());
                 edits.push(Edit {
                     start,
