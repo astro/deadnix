@@ -15,50 +15,50 @@ fn main() {
         .author("Astro <astro@spaceboyz.net>")
         .about("Find dead code in .nix files")
         .arg(
-            clap::Arg::with_name("NO_LAMBDA_ARG")
-                .short("l")
+            clap::Arg::new("NO_LAMBDA_ARG")
+                .short('l')
                 .long("no-lambda-arg")
                 .help("Don't check lambda parameter arguments"),
         )
         .arg(
-            clap::Arg::with_name("NO_LAMBDA_PATTERN_NAMES")
-                .short("L")
+            clap::Arg::new("NO_LAMBDA_PATTERN_NAMES")
+                .short('L')
                 .long("no-lambda-pattern-names")
                 .help("Don't check lambda attrset pattern names (don't break nixpkgs callPackage)"),
         )
         .arg(
-            clap::Arg::with_name("NO_UNDERSCORE")
-                .short("_")
+            clap::Arg::new("NO_UNDERSCORE")
+                .short('_')
                 .long("no-underscore")
                 .help("Don't check any bindings that start with a _"),
         )
         .arg(
-            clap::Arg::with_name("QUIET")
-                .short("q")
+            clap::Arg::new("QUIET")
+                .short('q')
                 .long("quiet")
                 .help("Don't print dead code report"),
         )
         .arg(
-            clap::Arg::with_name("EDIT")
-                .short("e")
+            clap::Arg::new("EDIT")
+                .short('e')
                 .long("edit")
                 .help("Remove unused code and write to source file"),
         )
         .arg(
-            clap::Arg::with_name("HIDDEN")
-                .short("h")
+            clap::Arg::new("HIDDEN")
+                .short('h')
                 .long("hidden")
                 .help("Recurse into hidden subdirectories and process hidden .*.nix files"),
         )
         .arg(
-            clap::Arg::with_name("FAIL_ON_REPORTS")
-                .short("f")
+            clap::Arg::new("FAIL_ON_REPORTS")
+                .short('f')
                 .long("fail")
                 .help("Exit with 1 if unused code has been found"),
         )
         .arg(
-            clap::Arg::with_name("FILE_PATHS")
-                .multiple(true)
+            clap::Arg::new("FILE_PATHS")
+                .multiple_values(true)
                 .help(".nix files, or directories with .nix files inside"),
         )
         .get_matches();
