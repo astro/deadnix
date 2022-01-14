@@ -51,11 +51,20 @@ fn main() {
                 .help("Recurse into hidden subdirectories and process hidden .*.nix files"),
         )
         .arg(
+            clap::Arg::with_name("FAIL_ON_REPORTS")
+                .short("f")
+                .long("fail")
+                .help("Exit with 1 if unused code has been found"),
+        )
+        .arg(
             clap::Arg::with_name("FILE_PATHS")
                 .multiple(true)
                 .help(".nix files, or directories with .nix files inside"),
         )
         .get_matches();
+
+    let fail_on_reports = matches.is_present("FAIL_ON_REPORTS");
+    let mut report_count = 0;
 
     let settings = dead_code::Settings {
         no_lambda_arg: matches.is_present("NO_LAMBDA_ARG"),
@@ -114,6 +123,7 @@ fn main() {
         }
 
         let results = settings.find_dead_code(&ast.node());
+        report_count += results.len();
         if !quiet && !results.is_empty() {
             crate::report::Report::new(file.to_string(), &content, results.clone()).print();
         }
@@ -121,5 +131,9 @@ fn main() {
             let new_ast = crate::edit::edit_dead_code(&content, results.into_iter());
             fs::write(file, new_ast).expect("fs::write");
         }
+    }
+
+    if fail_on_reports && report_count > 0 {
+        std::process::exit(1);
     }
 }
