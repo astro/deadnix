@@ -1,10 +1,11 @@
-use crate::{binding::Binding, usage};
+use std::fmt;
 use rnix::{
     types::{AttrSet, EntryHolder, Ident, Lambda, LetIn, Pattern, TokenWrapper, TypedNode},
     NixLanguage, SyntaxKind,
 };
 use rowan::api::SyntaxNode;
-use std::fmt;
+use ariadne::Color;
+use crate::{binding::Binding, usage};
 
 /// AST subtree that declares variables
 #[derive(Debug, Clone)]
@@ -215,6 +216,19 @@ impl Scope {
                     |from| usage::find(name, from.node()),
                 )
             }),
+        }
+    }
+
+    pub fn color(&self) -> Color {
+        match self {
+            Scope::LambdaPattern(_, _) =>
+                Color::Magenta,
+            Scope::LambdaArg(_, _) =>
+                Color::Cyan,
+            Scope::LetIn(_) =>
+                Color::Red,
+            Scope::RecAttrSet(_) =>
+                Color::Yellow,
         }
     }
 }

@@ -125,7 +125,7 @@ fn main() {
         let results = settings.find_dead_code(&ast.node());
         report_count += results.len();
         if !quiet && !results.is_empty() {
-            crate::report::Report::new(file.to_string(), &content, results.clone()).print();
+            crate::report::print(file.to_string(), &content, &results);
         }
         if edit {
             let new_ast = crate::edit::edit_dead_code(&content, results.into_iter());

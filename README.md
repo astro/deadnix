@@ -38,38 +38,32 @@ $ nix run github:astro/deadnix test.nix
 ```
 
 ```
-test.nix:1:
-> unusedArgs@{ unusedArg, usedArg, ... }:
-> ^^^^^^^^^^   ^^^^^^^^^
-> |            |
-> |            Unused lambda pattern: unusedArg
-> Unused lambda pattern: unusedArgs
-test.nix:3:
->   inherit (builtins) unused_inherit;
->                      ^^^^^^^^^^^^^^
->                      |
->                      Unused let binding: unused_inherit
-test.nix:5:
->   unused = "fnord";
->   ^^^^^^
->   |
->   Unused let binding: unused
-test.nix:10:
->   shadowed = 42;
->   ^^^^^^^^
->   |
->   Unused let binding: shadowed
-test.nix:11:
->   _unused = unused: false;
->   ^^^^^^^   ^^^^^^
->   |         |
->   |         Unused lambda argument: unused
->   Unused let binding: _unused
-test.nix:13:
->   x = { unusedArg2, x ? args.y, ... }@args: used1 + x;
->         ^^^^^^^^^^
->         |
->         Unused lambda pattern: unusedArg2
+Warning: Unused declarations were found.
+    ╭─[example.nix:1:1]
+    │
+  1 │ unusedArgs@{ unusedArg, usedArg, ... }:
+    · ─────┬────   ────┬────
+    ·      │           ╰────── Unused lambda pattern: unusedArg
+    ·      │
+    ·      ╰────────────────── Unused lambda pattern: unusedArgs
+  3 │   inherit (builtins) unused_inherit;
+    ·                      ───────┬──────
+    ·                             ╰──────── Unused let binding: unused_inherit
+  5 │   unused = "fnord";
+    ·   ───┬──
+    ·      ╰──── Unused let binding: unused
+ 10 │   shadowed = 42;
+    ·   ────┬───
+    ·       ╰───── Unused let binding: shadowed
+ 11 │   _unused = unused: false;
+    ·   ───┬───   ───┬──
+    ·      │         ╰──── Unused lambda argument: unused
+    ·      │
+    ·      ╰────────────── Unused let binding: _unused
+ 13 │   x = { unusedArg2, x ? args.y, ... }@args: used1 + x;
+    ·         ─────┬────
+    ·              ╰────── Unused lambda pattern: unusedArg2
+────╯
 ```
 
 
