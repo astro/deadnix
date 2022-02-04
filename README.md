@@ -17,18 +17,23 @@ $ nix run github:astro/deadnix -- --help
 
 ```
 USAGE:
-    deadnix [FLAGS] [FILE_PATHS]...
-
-FLAGS:
-    -e, --edit             Remove unused code and write to source file
-    -l, --no-lambda-arg    Don't check lambda parameter arguments
-    -_, --no-underscore    Don't check any bindings that start with a _
-    -q, --quiet            Don't print dead code report
-    -h, --help             Prints help information
-    -V, --version          Prints version information
+    deadnix [OPTIONS] [FILE_PATHS]...
 
 ARGS:
-    <FILE_PATHS>...    .nix files
+    <FILE_PATHS>...    .nix files, or directories with .nix files inside
+
+OPTIONS:
+    -_, --no-underscore              Don't check any bindings that start with a _
+    -e, --edit                       Remove unused code and write to source file
+    -f, --fail                       Exit with 1 if unused code has been found
+    -h, --hidden                     Recurse into hidden subdirectories and process hidden .*.nix
+                                     files
+        --help                       Print help information
+    -l, --no-lambda-arg              Don't check lambda parameter arguments
+    -L, --no-lambda-pattern-names    Don't check lambda attrset pattern names (don't break nixpkgs
+                                     callPackage)
+    -q, --quiet                      Don't print dead code report
+    -V, --version                    Print version information
 ```
 
 ### Scan for unused code
