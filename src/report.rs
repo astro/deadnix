@@ -1,4 +1,4 @@
-use ariadne::{Label, Report, ReportKind, sources};
+use ariadne::{Config, Label, Report, ReportKind, sources};
 use crate::dead_code::DeadCode;
 use rnix::types::TypedNode;
 
@@ -9,6 +9,10 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
         file.clone(),
         first_result_range.start().into()
     )
+        .with_config(
+            Config::default()
+                .with_compact(true)
+        )
         .with_message("Unused declarations were found.");
 
     // reverse order to avoid overlapping lanes
