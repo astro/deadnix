@@ -36,6 +36,7 @@
               -D warnings \
               -A clippy::module-name-repetitions \
               -A clippy::too-many-lines \
+              -A clippy::cast-possible-wrap \
               -A clippy::nonminimal_bool''
           ];
       };
