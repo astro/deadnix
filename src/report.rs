@@ -53,5 +53,5 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
         .print(sources(vec![
             (file, content)
         ]))
-        .unwrap()
+        .unwrap();
 }
