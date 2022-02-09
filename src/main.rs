@@ -57,6 +57,16 @@ fn main() {
                 .help("Exit with 1 if unused code has been found"),
         )
         .arg(
+            clap::Arg::new("OUTPUT_FORMAT")
+                .short('o')
+                .long("output-format")
+                .takes_value(true)
+                .possible_value("human-readable")
+                .possible_value("json")
+                .default_value("human-readable")
+                .help("Output format to use"),
+        )
+        .arg(
             clap::Arg::new("FILE_PATHS")
                 .multiple_values(true)
                 .help(".nix files, or directories with .nix files inside"),
@@ -80,6 +90,7 @@ fn main() {
             .to_str()
             .map_or(false, |s| s == "." || ! s.starts_with('.'))
     };
+    let output_format = matches.value_of("OUTPUT_FORMAT");
 
     let file_paths = matches.values_of("FILE_PATHS").expect("FILE_PATHS");
     let files = file_paths.flat_map(|path| {
@@ -125,7 +136,14 @@ fn main() {
         let results = settings.find_dead_code(&ast.node());
         report_count += results.len();
         if !quiet && !results.is_empty() {
-            crate::report::print(file.to_string(), &content, &results);
+            match output_format {
+                Some("human-readable") => crate::report::print(file.to_string(), &content, &results),
+                #[cfg(feature = "json-out")]
+                Some("json") => crate::report::print_json(&file.to_string(), &content, &results),
+                #[cfg(not(feature = "json-out"))]
+                Some("json") => println!("`deadnix` needs to be built with `json-out` feature flag for JSON output format."),
+                _ => println!("Unknown output format."), // clap shouldn't allow this case
+            };
         }
         if edit {
             let new_ast = crate::edit::edit_dead_code(&content, results.into_iter());
