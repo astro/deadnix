@@ -10,7 +10,7 @@ mod scope;
 mod usage;
 
 fn main() {
-    let matches = clap::App::new("deadnix")
+    let matches = clap::Command::new("deadnix")
         .version(env!("CARGO_PKG_VERSION"))
         .author("Astro <astro@spaceboyz.net>")
         .about("Find dead code in .nix files")
