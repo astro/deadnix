@@ -58,7 +58,9 @@
       };
     }) // {
       overlay = final: prev: {
-        deadnix = self.packages.${prev.system};
+        inherit (self.packages.${prev.system})
+          deadnix
+        ;
       };
     };
 }
