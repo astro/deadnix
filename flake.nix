@@ -38,6 +38,7 @@
               -A clippy::cast-possible-truncation \
               -A clippy::nonminimal_bool''
           ];
+        meta.description = "Scan Nix files for dead code";
       };
       defaultPackage = packages.deadnix;
 
@@ -58,7 +59,9 @@
       };
     }) // {
       overlay = final: prev: {
-        deadnix = self.packages.${prev.system};
+        inherit (self.packages.${prev.system})
+          deadnix
+        ;
       };
     };
 }
