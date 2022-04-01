@@ -19,5 +19,5 @@ serde = { version = "1.0.136", optional = true }
 serde_json = { version = "1.0.78", optional = true }
 
 [features]
-default = []
+default = [ "json-out" ]
 json-out = [ "serde", "serde_json" ]
