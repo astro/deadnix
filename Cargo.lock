@@ -66,7 +66,7 @@ checksum = "328b822bdcba4d4e402be8d9adb6eebf269f969f8eadef977a553ff3c4fbcb58"
 
 [[package]]
 name = "deadnix"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "ariadne",
  "clap",
