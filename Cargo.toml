@@ -10,13 +10,13 @@ repository = "https://github.com/astro/deadnix.git"
 documentation = "https://docs.rs/deadnix"
 
 [dependencies]
-rowan = "0.12"
+rowan = "0.12"  # dependency version of rnix-0.10.1
 rnix = "0.10"
 clap = "3"
 walkdir = "2"
 ariadne = "0.1"
-serde = { version = "1.0.136", optional = true }
-serde_json = { version = "1.0.78", optional = true }
+serde = { version = "1", optional = true }
+serde_json = { version = "1", optional = true }
 
 [features]
 default = [ "json-out" ]
