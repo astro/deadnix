@@ -44,6 +44,17 @@
 
       checks = packages;
 
+      hydraJobs =
+        let
+          hydraSystems = [
+            "x86_64-linux"
+            "aarch64-linux"
+          ];
+        in
+          if builtins.elem system hydraSystems
+          then builtins.mapAttrs (_: nixpkgs.lib.hydraJob) checks
+          else {};
+
       # `nix run`
       apps.deadnix = utils.lib.mkApp {
         drv = packages.deadnix;
