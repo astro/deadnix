@@ -1,3 +1,4 @@
+use std::env;
 use ariadne::{Config, Label, Report, ReportKind, sources};
 use crate::dead_code::DeadCode;
 use rnix::{TextSize, types::TypedNode};
@@ -7,6 +8,8 @@ use serde_json::json;
 
 // assumes results to be sorted by occurrence in file
 pub fn print(file: String, content: &str, results: &[DeadCode]) {
+    let no_color = env::var("NO_COLOR").is_ok();
+
     let first_result_range = results[0].binding.name.node().text_range();
     let mut builder = Report::build(
         ReportKind::Warning,
@@ -16,6 +19,7 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
         .with_config(
             Config::default()
                 .with_compact(true)
+                .with_color(!no_color)
         )
         .with_message("Unused declarations were found.");
 
@@ -44,11 +48,13 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
         let end_char = content_chars;
 
         // add report label
-        builder = builder.with_label(Label::new((file.clone(), start_char..end_char))
+        let mut label = Label::new((file.clone(), start_char..end_char))
             .with_message(format!("{}", result))
-            .with_color(result.scope.color())
-            .with_order(order as i32)
-        );
+            .with_order(order as i32);
+        if !no_color {
+            label = label.with_color(result.scope.color());
+        }
+        builder = builder.with_label(label);
     }
 
     // print

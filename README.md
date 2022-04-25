@@ -36,6 +36,9 @@ OPTIONS:
     -V, --version                    Print version information
 ```
 
+Reports contain ANSI color escape codes unless the
+[`$NO_COLOR`](https://no-color.org/) environment variable is set.
+
 ### Scan for unused code
 
 ```
