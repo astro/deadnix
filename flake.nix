@@ -40,7 +40,7 @@
           ];
         meta.description = "Scan Nix files for dead code";
       };
-      defaultPackage = packages.deadnix;
+      packages.default = packages.deadnix;
 
       checks = packages;
 
@@ -59,17 +59,17 @@
       apps.deadnix = utils.lib.mkApp {
         drv = packages.deadnix;
       };
-      defaultApp = apps.deadnix;
+      apps.default = apps.deadnix;
 
       # `nix develop`
-      devShell = pkgs.mkShell {
+      devShells.default = pkgs.mkShell {
         nativeBuildInputs = [
           fenix.packages.${system}.rust-analyzer
         ] ++
-        (with defaultPackage; nativeBuildInputs ++ buildInputs);
+        (with packages.default; nativeBuildInputs ++ buildInputs);
       };
     }) // {
-      overlay = final: prev: {
+      overlays.default = final: prev: {
         inherit (self.packages.${prev.system})
           deadnix
         ;
