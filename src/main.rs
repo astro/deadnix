@@ -69,6 +69,7 @@ fn main() {
         .arg(
             clap::Arg::new("FILE_PATHS")
                 .multiple_values(true)
+                .default_value(".")
                 .help(".nix files, or directories with .nix files inside"),
         )
         .get_matches();
