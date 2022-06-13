@@ -163,16 +163,24 @@ fn lambda_pattern_alive() {
 }
 
 #[test]
-fn lambda_pattern_dead() {
+fn lambda_pattern_dead_ellipsis_alias() {
     let results = run("alive@{ dead, ... }: alive");
     assert_eq!(1, results.len());
     assert_eq!(results[0].binding.name.as_str(), "dead");
 }
 
 #[test]
-fn lambda_pattern_no_ellipsis() {
-    let results = run("{ alive }: false");
-    assert_eq!(0, results.len());
+fn lambda_pattern_dead_simple() {
+    let results = run("{ dead }: false");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead");
+}
+
+#[test]
+fn lambda_pattern_alias() {
+    let results = run("{ dead }@args: args");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.as_str(), "dead");
 }
 
 #[test]

@@ -84,7 +84,6 @@ impl Scope {
     pub fn bindings(&self) -> Box<dyn Iterator<Item = Binding>> {
         match self {
             Scope::LambdaPattern(pattern, _) => {
-                let mortal = pattern.ellipsis();
                 Box::new(
                     pattern
                         .at()
@@ -95,7 +94,7 @@ impl Scope {
                         .into_iter()
                         .chain(pattern.entries().map(move |entry| {
                             let name = entry.name().expect("entry.name");
-                            Binding::new(name, entry.node().clone(), entry.node().clone(), mortal)
+                            Binding::new(name, entry.node().clone(), entry.node().clone(), true)
                         })),
                 )
             }
