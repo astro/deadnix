@@ -101,14 +101,13 @@ fn main() {
                 walkdir::WalkDir::new(path)
                     .into_iter()
                     .filter_entry(is_visible)
-                    .into_iter()
-                    .map(|result| result.unwrap().path().display().to_string())
-                    .filter(|path| {
-                        path.rsplit('.')
-                            .next()
-                            .map(|ext| ext.eq_ignore_ascii_case("nix"))
-                            == Some(true)
-                    }),
+                    .map(Result::unwrap)
+                    .filter(|entry| {
+                        entry.file_type().is_file()
+                            && entry.path().extension().map_or(false, |ext| ext.eq_ignore_ascii_case("nix"))
+                    })
+                    .map(|entry| entry.path().display().to_string())
+                ,
             )
         } else {
             Box::new(Some(path.to_string()).into_iter())
