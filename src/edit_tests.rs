@@ -2,7 +2,7 @@
 
 use crate::dead_code::Settings;
 
-fn run(content: &str) -> String {
+fn run(content: &str) -> (String, bool) {
     let ast = rnix::parse(content);
     assert_eq!(0, ast.errors().len());
 
@@ -18,7 +18,15 @@ fn run(content: &str) -> String {
 macro_rules! no_edits {
     ($s: expr) => {
         let s = $s.to_string();
-        assert_eq!(run(&s), s);
+        assert_eq!(run(&s), (s, false));
+    };
+}
+
+macro_rules! has_edits {
+    ($s1: expr, $s2: expr) => {
+        let s1 = $s1.to_string();
+        let s2 = $s2.to_string();
+        assert_eq!(run(&s1), (s2, true));
     };
 }
 
@@ -34,14 +42,18 @@ fn let_in_alive_deep() {
 
 #[test]
 fn let_in_alive_dead() {
-    let results = run("let alive = 42; dead = 23; in alive");
-    assert_eq!(results, "let alive = 42; in alive");
+    has_edits!(
+        "let alive = 42; dead = 23; in alive",
+        "let alive = 42; in alive"
+    );
 }
 
 #[test]
 fn let_in_dead_only() {
-    let results = run("let dead = 42; in alive");
-    assert_eq!(results, "alive");
+    has_edits!(
+        "let dead = 42; in alive",
+        "alive"
+    );
 }
 
 #[test]
@@ -51,33 +63,43 @@ fn let_inherit_in_alive() {
 
 #[test]
 fn let_inherit_in_alive_dead() {
-    let results = run("let inherit alive dead; in alive");
-    assert_eq!(results, "let inherit alive; in alive");
+    has_edits!(
+        "let inherit alive dead; in alive",
+        "let inherit alive; in alive"
+    );
 }
 
 #[test]
 fn let_inherit_dead_let_alive_in_dead() {
-    let results = run("let inherit dead; alive = true; in alive");
-    assert_eq!(results, "let alive = true; in alive");
+    has_edits!(
+        "let inherit dead; alive = true; in alive",
+        "let alive = true; in alive"
+    );
 }
 
 #[test]
 fn let_inherit_in_dead_only() {
-    let results = run("let inherit dead; in alive");
-    assert_eq!(results, "alive");
+    has_edits!(
+        "let inherit dead; in alive",
+        "alive"
+    );
 }
 
 #[test]
 fn let_inherit_multi_in_dead_only() {
-    let results = run("let inherit dead1 dead2 dead3; in alive");
-    assert_eq!(results, "alive");
+    has_edits!(
+        "let inherit dead1 dead2 dead3; in alive",
+        "alive"
+    );
 }
 
 /// <https://github.com/astro/deadnix/issues/7>
 #[test]
 fn let_dead_only_whitespacing() {
-    let results = run("{ used }: let unused = {}; in used");
-    assert_eq!(results, "{ used }: used");
+    has_edits!(
+        "{ used }: let unused = {}; in used",
+        "{ used }: used"
+    );
 }
 
 #[test]
@@ -87,26 +109,34 @@ fn let_inherit_from_in_alive() {
 
 #[test]
 fn let_inherit_from_in_alive_dead() {
-    let results = run("let inherit (x) alive dead; in alive");
-    assert_eq!(results, "let inherit (x) alive; in alive");
+    has_edits!(
+        "let inherit (x) alive dead; in alive",
+        "let inherit (x) alive; in alive"
+    );
 }
 
 #[test]
 fn let_inherit_from_dead_let_alive_in_dead() {
-    let results = run("let inherit (x) dead; alive = true; in alive");
-    assert_eq!(results, "let alive = true; in alive");
+    has_edits!(
+        "let inherit (x) dead; alive = true; in alive",
+        "let alive = true; in alive"
+    );
 }
 
 #[test]
 fn let_inherit_from_in_dead_only() {
-    let results = run("let inherit (x) dead; in alive");
-    assert_eq!(results, "alive");
+    has_edits!(
+        "let inherit (x) dead; in alive",
+        "alive"
+    );
 }
 
 #[test]
 fn let_inherit_from_multi_in_dead_only() {
-    let results = run("let inherit (grave) dead1 dead2 dead3; in alive");
-    assert_eq!(results, "alive");
+    has_edits!(
+        "let inherit (grave) dead1 dead2 dead3; in alive",
+        "alive"
+    );
 }
 
 #[test]
@@ -116,72 +146,93 @@ fn lambda_arg_alive() {
 
 #[test]
 fn lambda_arg_dead() {
-    let results = run("dead: false");
-    assert_eq!(results, "_dead: false");
+    has_edits!(
+        "dead: false",
+        "_dead: false"
+    );
 }
 
 #[test]
 fn lambda_arg_anon() {
-    let results = run("_anon: false");
-    assert_eq!(results, "_anon: false");
+    no_edits!("_anon: false");
 }
 
 #[test]
 fn lambda_at_pattern_dead() {
-    let results = run("dead@{ dead2 ? dead, ... }: false");
-    assert_eq!(results, "{ ... }: false");
+    has_edits!(
+        "dead@{ dead2 ? dead, ... }: false",
+        "{ ... }: false"
+    );
 }
 
 #[test]
 fn lambda_lead_at_dead() {
-    let results = run("dead@{ ... }: false");
-    assert_eq!(results, "{ ... }: false");
+    has_edits!(
+        "dead@{ ... }: false",
+        "{ ... }: false"
+    );
 }
 
 #[test]
 fn lambda_trail_at_dead() {
-    let results = run("{ ... }@dead: false");
-    assert_eq!(results, "{ ... }: false");
+    has_edits!(
+        "{ ... }@dead: false",
+        "{ ... }: false"
+    );
 }
 
 #[test]
 fn lambda_lead_at_space_dead() {
-    let results = run("dead @ { ... }: false");
-    assert_eq!(results, "{ ... }: false");
+    has_edits!(
+        "dead @ { ... }: false",
+        "{ ... }: false"
+    );
 }
 
 #[test]
 fn lambda_trail_at_space_dead() {
-    let results = run("{ ... } @ dead: false");
-    assert_eq!(results, "{ ... }: false");
+    has_edits!(
+        "{ ... } @ dead: false",
+        "{ ... }: false"
+    );
 }
 
 #[test]
 fn lambda_at_shadowed() {
-    let results = run("dead@{ ... }: dead@{ ... }: dead");
-    assert_eq!(results, "{ ... }: dead@{ ... }: dead");
+    has_edits!(
+        "dead@{ ... }: dead@{ ... }: dead",
+        "{ ... }: dead@{ ... }: dead"
+    );
 }
 
 #[test]
 fn lambda_pattern_dead() {
-    let results = run("alive@{ dead, ... }: alive");
-    assert_eq!(results, "alive@{ ... }: alive");
+    has_edits!(
+        "alive@{ dead, ... }: alive",
+        "alive@{ ... }: alive"
+    );
 }
 
 #[test]
 fn lambda_pattern_default_dead() {
-    let results = run("alive@{ dead ? true, ... }: alive");
-    assert_eq!(results, "alive@{ ... }: alive");
+    has_edits!(
+        "alive@{ dead ? true, ... }: alive",
+        "alive@{ ... }: alive"
+    );
 }
 
 #[test]
 fn lambda_pattern_mixed() {
-    let results = run("dead1@{ dead2, alive, ... }: alive");
-    assert_eq!(results, "{ alive, ... }: alive");
+    has_edits!(
+        "dead1@{ dead2, alive, ... }: alive",
+        "{ alive, ... }: alive"
+    );
 }
 
 #[test]
 fn lambda_pattern_dead_multiline() {
-    let results = run("{ alive\n, dead\n, ... }:\nalive");
-    assert_eq!(results, "{ alive\n, ... }:\nalive");
+    has_edits!(
+        "{ alive\n, dead\n, ... }:\nalive",
+        "{ alive\n, ... }:\nalive"
+    );
 }
