@@ -146,8 +146,10 @@ fn main() {
             };
         }
         if edit {
-            let new_ast = crate::edit::edit_dead_code(&content, results.into_iter());
-            fs::write(file, new_ast).expect("fs::write");
+            let (new_ast, has_changes) = crate::edit::edit_dead_code(&content, results.into_iter());
+            if has_changes {
+                fs::write(file, new_ast).expect("fs::write");
+            }
         }
     }
 

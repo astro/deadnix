@@ -32,7 +32,7 @@ fn apply_edits<'a>(src: &str, edits: impl Iterator<Item = &'a Edit>) -> String {
 pub fn edit_dead_code(
     original: &str,
     dead: impl Iterator<Item = DeadCode>,
-) -> String {
+) -> (String, bool) {
     let mut edits = dead.filter_map(dead_to_edit)
         .collect::<Vec<_>>();
     edits.sort_unstable_by(|e1, e2| {
@@ -43,16 +43,18 @@ pub fn edit_dead_code(
         }
     });
 
+    let has_changes = !edits.is_empty();
+
     let edited = apply_edits(original, edits.iter());
 
     // remove empty `let in`
     let ast = rnix::parse(&edited);
     let mut let_in_edits = Vec::new();
     remove_empty_scopes(&ast.node(), &mut let_in_edits);
-    if edits.is_empty() {
-        edited
+    if let_in_edits.is_empty() {
+        (edited, has_changes)
     } else {
-        apply_edits(&edited, let_in_edits.iter())
+        (apply_edits(&edited, let_in_edits.iter()), true)
     }
 }
 
