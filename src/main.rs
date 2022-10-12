@@ -1,5 +1,7 @@
 use std::fs;
 use clap::{Arg, ArgAction, Command};
+#[cfg(feature = "json-out")]
+use serde_json::json;
 
 mod binding;
 mod dead_code;
@@ -66,10 +68,12 @@ fn main() {
         )
         // taken by "HIDDEN"
         .disable_help_flag(true)
-        .arg(Arg::new("help")
-            .long("help")
-            .global(true)
-            .action(ArgAction::Help))
+        .arg(
+            Arg::new("help")
+                .long("help")
+                .global(true)
+                .action(ArgAction::Help)
+        )
         .arg(
             Arg::new("FAIL_ON_REPORTS")
                 .action(ArgAction::SetTrue)
@@ -81,11 +85,7 @@ fn main() {
             Arg::new("OUTPUT_FORMAT")
                 .short('o')
                 .long("output-format")
-                .value_parser([
-                    "human-readable",
-                    #[cfg(feature = "json-out")]
-                    "json",
-                ])
+                .value_parser(["human-readable", "json"])
                 .default_value("human-readable")
                 .help("Output format to use"),
         )
@@ -114,52 +114,101 @@ fn main() {
             .to_str()
             .map_or(false, |s| s == "." || ! s.starts_with('.'))
     };
-    let output_format = match matches.get_one::<&str>("OUTPUT_FORMAT") {
-        Some(&"human-readable") => OutputFormat::HumanReadable,
+    let output_format = matches.get_one::<String>("OUTPUT_FORMAT")
+        .map(|s| s.as_str());
+    let output_format = match output_format {
+        Some("human-readable") => OutputFormat::HumanReadable,
         #[cfg(feature = "json-out")]
-        Some(&"json") => OutputFormat::Json,
+        Some("json") => OutputFormat::Json,
         #[cfg(not(feature = "json-out"))]
-        Some(&"json") => println!("`deadnix` needs to be built with `json-out` feature flag for JSON output format."),
-        _ => unreachable!(), // clap shouldn't allow this case
+        Some("json") => panic!("`deadnix` needs to be built with `json-out` feature flag for JSON output format."),
+        _ => panic!("Unknown output format."), // clap shouldn't allow this case
     };
 
     let file_paths = matches.get_many::<String>("FILE_PATHS").expect("FILE_PATHS");
     let files = file_paths.flat_map(|path| {
-        let meta = fs::metadata(path).expect("fs::metadata");
-        let files: Box<dyn Iterator<Item = String>> = if meta.is_dir() {
-            Box::new(
-                walkdir::WalkDir::new(path)
-                    .into_iter()
-                    .filter_entry(is_visible)
-                    .map(Result::unwrap)
-                    .filter(|entry| {
-                        entry.file_type().is_file()
-                            && entry.path().extension().map_or(false, |ext| ext.eq_ignore_ascii_case("nix"))
-                    })
-                    .map(|entry| entry.path().display().to_string())
-                ,
-            )
-        } else {
-            Box::new(Some(path.to_string()).into_iter())
+        let meta = fs::metadata(path);
+        let files: Box<dyn Iterator<Item = String>> = match meta {
+            // scan directory
+            Ok(meta) if meta.is_dir() =>
+                Box::new(
+                    walkdir::WalkDir::new(path)
+                        .into_iter()
+                        .filter_entry(is_visible)
+                        .map(Result::unwrap)
+                        .filter(|entry| {
+                            entry.file_type().is_file()
+                                && entry.path().extension().map_or(false, |ext| ext.eq_ignore_ascii_case("nix"))
+                        })
+                        .map(|entry| entry.path().display().to_string())
+                ),
+
+            // single file
+            Ok(_) =>
+                Box::new([path.to_string()].into_iter()),
+
+            // error
+            Err(error) => {
+                match output_format {
+                    OutputFormat::HumanReadable =>
+                        eprintln!("Error stating file {}: {}", path, error),
+
+                    #[cfg(feature = "json-out")]
+                    OutputFormat::Json =>
+                        println!("{}", json!({
+                            "file": path,
+                            "results": [{
+                                "message": format!("{}", error),
+                            }],
+                        })),
+                }
+                Box::new([].into_iter())
+            }
         };
         files
     });
     for file in files {
         let content = match fs::read_to_string(&file) {
             Ok(content) => content,
-            Err(err) => {
-                eprintln!("Error reading file {}: {}", file, err);
+            Err(error) => {
+                match output_format {
+                    OutputFormat::HumanReadable =>
+                        eprintln!("Error reading file {}: {}", file, error),
+
+                    #[cfg(feature = "json-out")]
+                    OutputFormat::Json =>
+                        println!("{}", json!({
+                            "file": file,
+                            "results": [{
+                                "message": format!("{}", error),
+                            }],
+                        })),
+                }
                 continue;
             }
         };
 
         let ast = rnix::parse(&content);
-        let mut failed = false;
-        for error in ast.errors() {
-            eprintln!("Error parsing file {}: {}", file, error);
-            failed = true;
-        }
-        if failed {
+        let errors = ast.errors();
+
+        if errors.len() > 0 {
+            match output_format {
+                OutputFormat::HumanReadable =>
+                    for error in errors.into_iter() {
+                        eprintln!("Error parsing file {}: {}", file, error);
+                    },
+
+                #[cfg(feature = "json-out")]
+                OutputFormat::Json =>
+                    println!("{}", json!({
+                        "file": file,
+                        "results": errors.into_iter()
+                            .map(|error| json!({
+                                "message": format!("{}", error),
+                            }))
+                            .collect::<Vec<_>>(),
+                    })),
+            }
             continue;
         }
 
