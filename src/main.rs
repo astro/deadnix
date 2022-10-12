@@ -64,6 +64,12 @@ fn main() {
                 .long("hidden")
                 .help("Recurse into hidden subdirectories and process hidden .*.nix files"),
         )
+        // taken by "HIDDEN"
+        .disable_help_flag(true)
+        .arg(Arg::new("help")
+            .long("help")
+            .global(true)
+            .action(ArgAction::Help))
         .arg(
             Arg::new("FAIL_ON_REPORTS")
                 .action(ArgAction::SetTrue)
