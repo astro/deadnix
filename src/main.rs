@@ -10,6 +10,13 @@ mod report;
 mod scope;
 mod usage;
 
+#[derive(Clone, Copy, Debug)]
+enum OutputFormat {
+    HumanReadable,
+    #[cfg(feature = "json-out")]
+    Json,
+}
+
 fn main() {
     let matches = Command::new("deadnix")
         .version(env!("CARGO_PKG_VERSION"))
@@ -68,7 +75,11 @@ fn main() {
             Arg::new("OUTPUT_FORMAT")
                 .short('o')
                 .long("output-format")
-                .value_parser(["human-readable", "json"])
+                .value_parser([
+                    "human-readable",
+                    #[cfg(feature = "json-out")]
+                    "json",
+                ])
                 .default_value("human-readable")
                 .help("Output format to use"),
         )
@@ -97,7 +108,14 @@ fn main() {
             .to_str()
             .map_or(false, |s| s == "." || ! s.starts_with('.'))
     };
-    let output_format = matches.get_one::<String>("OUTPUT_FORMAT");
+    let output_format = match matches.get_one::<&str>("OUTPUT_FORMAT") {
+        Some(&"human-readable") => OutputFormat::HumanReadable,
+        #[cfg(feature = "json-out")]
+        Some(&"json") => OutputFormat::Json,
+        #[cfg(not(feature = "json-out"))]
+        Some(&"json") => println!("`deadnix` needs to be built with `json-out` feature flag for JSON output format."),
+        _ => unreachable!(), // clap shouldn't allow this case
+    };
 
     let file_paths = matches.get_many::<String>("FILE_PATHS").expect("FILE_PATHS");
     let files = file_paths.flat_map(|path| {
@@ -142,13 +160,13 @@ fn main() {
         let results = settings.find_dead_code(&ast.node());
         report_count += results.len();
         if !quiet && !results.is_empty() {
-            match output_format.map(|s| s.as_str()) {
-                Some("human-readable") => crate::report::print(file.to_string(), &content, &results),
+            match output_format {
+                OutputFormat::HumanReadable =>
+                    crate::report::print(file.to_string(), &content, &results),
+
                 #[cfg(feature = "json-out")]
-                Some("json") => crate::report::print_json(&file.to_string(), &content, &results),
-                #[cfg(not(feature = "json-out"))]
-                Some("json") => println!("`deadnix` needs to be built with `json-out` feature flag for JSON output format."),
-                _ => println!("Unknown output format."), // clap shouldn't allow this case
+                OutputFormat::Json =>
+                    crate::report::print_json(&file.to_string(), &content, &results),
             };
         }
         if edit {
