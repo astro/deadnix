@@ -1,4 +1,5 @@
 use std::fs;
+use clap::{Arg, ArgAction, Command};
 
 mod binding;
 mod dead_code;
@@ -10,90 +11,95 @@ mod scope;
 mod usage;
 
 fn main() {
-    let matches = clap::Command::new("deadnix")
+    let matches = Command::new("deadnix")
         .version(env!("CARGO_PKG_VERSION"))
         .author("Astro <astro@spaceboyz.net>")
         .about("Find dead code in .nix files")
         .arg(
-            clap::Arg::new("NO_LAMBDA_ARG")
+            Arg::new("NO_LAMBDA_ARG")
+                .action(ArgAction::SetTrue)
                 .short('l')
                 .long("no-lambda-arg")
                 .help("Don't check lambda parameter arguments"),
         )
         .arg(
-            clap::Arg::new("NO_LAMBDA_PATTERN_NAMES")
+            Arg::new("NO_LAMBDA_PATTERN_NAMES")
+                .action(ArgAction::SetTrue)
                 .short('L')
                 .long("no-lambda-pattern-names")
                 .help("Don't check lambda attrset pattern names (don't break nixpkgs callPackage)"),
         )
         .arg(
-            clap::Arg::new("NO_UNDERSCORE")
+            Arg::new("NO_UNDERSCORE")
+                .action(ArgAction::SetTrue)
                 .short('_')
                 .long("no-underscore")
                 .help("Don't check any bindings that start with a _"),
         )
         .arg(
-            clap::Arg::new("QUIET")
+            Arg::new("QUIET")
+                .action(ArgAction::SetTrue)
                 .short('q')
                 .long("quiet")
                 .help("Don't print dead code report"),
         )
         .arg(
-            clap::Arg::new("EDIT")
+            Arg::new("EDIT")
+                .action(ArgAction::SetTrue)
                 .short('e')
                 .long("edit")
                 .help("Remove unused code and write to source file"),
         )
         .arg(
-            clap::Arg::new("HIDDEN")
+            Arg::new("HIDDEN")
+                .action(ArgAction::SetTrue)
                 .short('h')
                 .long("hidden")
                 .help("Recurse into hidden subdirectories and process hidden .*.nix files"),
         )
         .arg(
-            clap::Arg::new("FAIL_ON_REPORTS")
+            Arg::new("FAIL_ON_REPORTS")
+                .action(ArgAction::SetTrue)
                 .short('f')
                 .long("fail")
                 .help("Exit with 1 if unused code has been found"),
         )
         .arg(
-            clap::Arg::new("OUTPUT_FORMAT")
+            Arg::new("OUTPUT_FORMAT")
                 .short('o')
                 .long("output-format")
-                .takes_value(true)
-                .possible_value("human-readable")
-                .possible_value("json")
+                .value_parser(["human-readable", "json"])
                 .default_value("human-readable")
                 .help("Output format to use"),
         )
         .arg(
-            clap::Arg::new("FILE_PATHS")
-                .multiple_values(true)
+            Arg::new("FILE_PATHS")
+                .num_args(1..)
                 .default_value(".")
                 .help(".nix files, or directories with .nix files inside"),
         )
         .get_matches();
 
-    let fail_on_reports = matches.is_present("FAIL_ON_REPORTS");
+    let fail_on_reports = matches.get_flag("FAIL_ON_REPORTS");
     let mut report_count = 0;
 
     let settings = dead_code::Settings {
-        no_lambda_arg: matches.is_present("NO_LAMBDA_ARG"),
-        no_lambda_pattern_names: matches.is_present("NO_LAMBDA_PATTERN_NAMES"),
-        no_underscore: matches.is_present("NO_UNDERSCORE"),
+        no_lambda_arg: matches.get_flag("NO_LAMBDA_ARG"),
+        no_lambda_pattern_names: matches.get_flag("NO_LAMBDA_PATTERN_NAMES"),
+        no_underscore: matches.get_flag("NO_UNDERSCORE"),
     };
-    let quiet = matches.is_present("QUIET");
-    let edit = matches.is_present("EDIT");
-    let is_visible = if matches.is_present("HIDDEN") {
+    let quiet = matches.get_flag("QUIET");
+    let edit = matches.get_flag("EDIT");
+    let is_visible = if matches.get_flag("HIDDEN") {
         |_: &walkdir::DirEntry| true
     } else {
         |entry: &walkdir::DirEntry| entry.file_name()
             .to_str()
             .map_or(false, |s| s == "." || ! s.starts_with('.'))
     };
-    let output_format = matches.value_of("OUTPUT_FORMAT");
+    let output_format = matches.get_one::<String>("OUTPUT_FORMAT");
 
-    let file_paths = matches.values_of("FILE_PATHS").expect("FILE_PATHS");
+    let file_paths = matches.get_many::<String>("FILE_PATHS").expect("FILE_PATHS");
     let files = file_paths.flat_map(|path| {
         let meta = fs::metadata(path).expect("fs::metadata");
         let files: Box<dyn Iterator<Item = String>> = if meta.is_dir() {
@@ -136,7 +142,7 @@ fn main() {
         let results = settings.find_dead_code(&ast.node());
         report_count += results.len();
         if !quiet && !results.is_empty() {
-            match output_format {
+            match output_format.map(|s| s.as_str()) {
                 Some("human-readable") => crate::report::print(file.to_string(), &content, &results),
                 #[cfg(feature = "json-out")]
                 Some("json") => crate::report::print_json(&file.to_string(), &content, &results),
