@@ -191,7 +191,7 @@ fn main() {
         let ast = rnix::parse(&content);
         let errors = ast.errors();
 
-        if errors.len() > 0 {
+        if !errors.is_empty() {
             match output_format {
                 OutputFormat::HumanReadable =>
                     for error in errors.into_iter() {
