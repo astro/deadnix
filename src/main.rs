@@ -115,7 +115,7 @@ fn main() {
             .map_or(false, |s| s == "." || ! s.starts_with('.'))
     };
     let output_format = matches.get_one::<String>("OUTPUT_FORMAT")
-        .map(|s| s.as_str());
+        .map(String::as_str);
     let output_format = match output_format {
         Some("human-readable") => OutputFormat::HumanReadable,
         #[cfg(feature = "json-out")]
@@ -194,7 +194,7 @@ fn main() {
         if !errors.is_empty() {
             match output_format {
                 OutputFormat::HumanReadable =>
-                    for error in errors.into_iter() {
+                    for error in errors {
                         eprintln!("Error parsing file {}: {}", file, error);
                     },
 
