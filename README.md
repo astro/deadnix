@@ -11,11 +11,8 @@ See [deadnix-action](https://github.com/astro/deadnix-action)
 
 ### Help
 
-```
+```console
 $ nix run github:astro/deadnix -- --help
-```
-
-```
 USAGE:
     deadnix [OPTIONS] [FILE_PATHS]...
 
@@ -59,11 +56,8 @@ Reports contain ANSI color escape codes unless the
 
 ### Scan for unused code
 
-```
+```console
 $ nix run github:astro/deadnix test.nix
-```
-
-```
 Warning: Unused declarations were found.
     ╭─[example.nix:1:1]
     │
@@ -97,7 +91,7 @@ Warning: Unused declarations were found.
 
 **Do commit** your changes into version control **before!**
 
-```
+```console
 $ nix run github:astro/deadnix -- -eq test.nix
 ```
 
