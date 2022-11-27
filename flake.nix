@@ -1,78 +1,62 @@
 {
   inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     utils.url = "github:numtide/flake-utils";
-    naersk.url = "github:nix-community/naersk";
-    fenix.url = "github:nix-community/fenix";
+    naersk = {
+      url = "github:nix-community/naersk/master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, utils, naersk, fenix }:
-    utils.lib.eachDefaultSystem (system: let
-      pkgs = nixpkgs.legacyPackages."${system}";
-      rust = fenix.packages.${system}.stable.withComponents [
-        "cargo"
-        "rustc"
-        "rust-src"  # just for rust-analyzer
-        "clippy"
-      ];
-
-      # Override the version used in naersk
-      naersk-lib = naersk.lib."${system}".override {
-        cargo = rust;
-        rustc = rust;
-      };
-    in rec {
-      # `nix build`
-      packages.deadnix = naersk-lib.buildPackage {
-        pname = "deadnix";
-        src = ./.;
-        doCheck = true;
-        cargoTestCommands = x:
-          x ++ [
-            # clippy
-            ''cargo clippy --all --all-features --tests -- \
-              -D clippy::pedantic \
-              -D warnings \
-              -A clippy::module-name-repetitions \
-              -A clippy::too-many-lines \
-              -A clippy::cast-possible-wrap \
-              -A clippy::cast-possible-truncation \
-              -A clippy::nonminimal_bool''
-          ];
-        meta.description = "Scan Nix files for dead code";
-      };
-      packages.default = packages.deadnix;
-
-      checks = packages;
-
-      hydraJobs =
+  outputs = { self, nixpkgs, utils, naersk }:
+    let
+      inherit (nixpkgs) lib;
+      deadnixLambda = pkgs:
         let
-          hydraSystems = [
-            "x86_64-linux"
-            "aarch64-linux"
-          ];
+          naersk-lib = pkgs.callPackage naersk { };
         in
-          if builtins.elem system hydraSystems
-          then builtins.mapAttrs (_: nixpkgs.lib.hydraJob) checks
-          else {};
+        naersk-lib.buildPackage {
+          pname = "deadnix";
+          root = ./.;
+          checkInputs = [ pkgs.rustPackages.clippy ];
+          doCheck = true;
+          cargoTestCommands = x:
+            x ++ [
+              ''cargo clippy --all --all-features --tests -- \
+                -D clippy::pedantic \
+                -D warnings \
+                -A clippy::module-name-repetitions \
+                -A clippy::too-many-lines \
+                -A clippy::cast-possible-wrap \
+                -A clippy::cast-possible-truncation \
+                -A clippy::nonminimal_bool''
+            ];
+          meta.description = "Scan Nix files for dead code";
+        };
+    in
+    utils.lib.eachDefaultSystem
+      (system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        {
+          packages = {
+            default = self.packages."${system}".deadnix;
+            deadnix = deadnixLambda pkgs;
+          };
 
-      # `nix run`
-      apps.deadnix = utils.lib.mkApp {
-        drv = packages.deadnix;
-      };
-      apps.default = apps.deadnix;
+          apps.default = utils.lib.mkApp {
+            drv = self.packages."${system}".default;
+          };
 
-      # `nix develop`
-      devShells.default = pkgs.mkShell {
-        nativeBuildInputs = [
-          fenix.packages.${system}.rust-analyzer
-        ] ++
-        (with packages.default; nativeBuildInputs ++ buildInputs);
-      };
-    }) // {
-      overlays.default = final: prev: {
-        inherit (self.packages.${prev.system})
-          deadnix
-        ;
-      };
+          devShells.default = with pkgs; mkShell {
+            nativeBuildInputs = [ cargo rustc rustfmt rustPackages.clippy rust-analyzer ];
+            RUST_SRC_PATH = rustPlatform.rustLibSrc;
+          };
+        })
+    // {
+      overlays.default = (_: prev: {
+        deadnix = deadnixLambda prev;
+      });
     };
 }
