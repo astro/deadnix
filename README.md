@@ -77,6 +77,26 @@ Warning: Unused declarations were found.
 $ nix run github:astro/deadnix -- -eq test.nix
 ```
 
+## Usage with [pre-commit](https://pre-commit.com/)
+
+Add the following to your project's `.pre-commit-config.yaml`:
+```yaml
+repos:
+  - repo: https://github.com/astro/deadnix
+    rev: ID # frozen: VERSION
+    hooks:
+      - id: deadnix
+        #args: [--edit] # Uncomment to automatically modify files
+        stages: [commit]
+```
+
+Replace `ID` and `VERSION` above with the relevant version tag and
+commit ID for reference, for example:
+
+```yaml
+rev: da39a3ee5e6b4b0d3255bfef95601890afd80709  # frozen: v1.2.3
+```
+
 ## Behavior
 
 ### Renaming of all unused to lambda args to start with `_`
