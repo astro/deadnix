@@ -1,7 +1,7 @@
-use std::env;
-use ariadne::{Config, Label, Report, ReportKind, sources};
 use crate::dead_code::DeadCode;
-use rnix::{TextSize, types::TypedNode};
+use ariadne::{sources, Config, Label, Report, ReportKind};
+use rnix::{types::TypedNode, TextSize};
+use std::env;
 
 #[cfg(feature = "json-out")]
 use serde_json::json;
@@ -14,20 +14,15 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
     let mut builder = Report::build(
         ReportKind::Warning,
         file.clone(),
-        first_result_range.start().into()
+        first_result_range.start().into(),
     )
-        .with_config(
-            Config::default()
-                .with_compact(true)
-                .with_color(!no_color)
-        )
-        .with_message("Unused declarations were found.");
+    .with_config(Config::default().with_compact(true).with_color(!no_color))
+    .with_message("Unused declarations were found.");
 
     // advance into content to convert byte offsets into char offsets
     let mut content_bytes = 0;
     let mut content_chars = 0usize;
-    let mut char_bytes = content.chars()
-        .map(|c| usize::from(TextSize::of(c)));
+    let mut char_bytes = content.chars().map(|c| usize::from(TextSize::of(c)));
     // reverse order to avoid overlapping lanes
     let mut order = results.len();
     for result in results {
@@ -58,10 +53,9 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
     }
 
     // print
-    builder.finish()
-        .print(sources(vec![
-            (file, content)
-        ]))
+    builder
+        .finish()
+        .print(sources(vec![(file, content)]))
         .unwrap();
 }
 

@@ -50,10 +50,7 @@ fn let_in_alive_dead() {
 
 #[test]
 fn let_in_dead_only() {
-    has_edits!(
-        "let dead = 42; in alive",
-        "alive"
-    );
+    has_edits!("let dead = 42; in alive", "alive");
 }
 
 #[test]
@@ -79,27 +76,18 @@ fn let_inherit_dead_let_alive_in_dead() {
 
 #[test]
 fn let_inherit_in_dead_only() {
-    has_edits!(
-        "let inherit dead; in alive",
-        "alive"
-    );
+    has_edits!("let inherit dead; in alive", "alive");
 }
 
 #[test]
 fn let_inherit_multi_in_dead_only() {
-    has_edits!(
-        "let inherit dead1 dead2 dead3; in alive",
-        "alive"
-    );
+    has_edits!("let inherit dead1 dead2 dead3; in alive", "alive");
 }
 
 /// <https://github.com/astro/deadnix/issues/7>
 #[test]
 fn let_dead_only_whitespacing() {
-    has_edits!(
-        "{ used }: let unused = {}; in used",
-        "{ used }: used"
-    );
+    has_edits!("{ used }: let unused = {}; in used", "{ used }: used");
 }
 
 #[test]
@@ -125,18 +113,12 @@ fn let_inherit_from_dead_let_alive_in_dead() {
 
 #[test]
 fn let_inherit_from_in_dead_only() {
-    has_edits!(
-        "let inherit (x) dead; in alive",
-        "alive"
-    );
+    has_edits!("let inherit (x) dead; in alive", "alive");
 }
 
 #[test]
 fn let_inherit_from_multi_in_dead_only() {
-    has_edits!(
-        "let inherit (grave) dead1 dead2 dead3; in alive",
-        "alive"
-    );
+    has_edits!("let inherit (grave) dead1 dead2 dead3; in alive", "alive");
 }
 
 #[test]
@@ -146,10 +128,7 @@ fn lambda_arg_alive() {
 
 #[test]
 fn lambda_arg_dead() {
-    has_edits!(
-        "dead: false",
-        "_dead: false"
-    );
+    has_edits!("dead: false", "_dead: false");
 }
 
 #[test]
@@ -159,42 +138,27 @@ fn lambda_arg_anon() {
 
 #[test]
 fn lambda_at_pattern_dead() {
-    has_edits!(
-        "dead@{ dead2 ? dead, ... }: false",
-        "{ ... }: false"
-    );
+    has_edits!("dead@{ dead2 ? dead, ... }: false", "{ ... }: false");
 }
 
 #[test]
 fn lambda_lead_at_dead() {
-    has_edits!(
-        "dead@{ ... }: false",
-        "{ ... }: false"
-    );
+    has_edits!("dead@{ ... }: false", "{ ... }: false");
 }
 
 #[test]
 fn lambda_trail_at_dead() {
-    has_edits!(
-        "{ ... }@dead: false",
-        "{ ... }: false"
-    );
+    has_edits!("{ ... }@dead: false", "{ ... }: false");
 }
 
 #[test]
 fn lambda_lead_at_space_dead() {
-    has_edits!(
-        "dead @ { ... }: false",
-        "{ ... }: false"
-    );
+    has_edits!("dead @ { ... }: false", "{ ... }: false");
 }
 
 #[test]
 fn lambda_trail_at_space_dead() {
-    has_edits!(
-        "{ ... } @ dead: false",
-        "{ ... }: false"
-    );
+    has_edits!("{ ... } @ dead: false", "{ ... }: false");
 }
 
 #[test]
@@ -207,18 +171,12 @@ fn lambda_at_shadowed() {
 
 #[test]
 fn lambda_pattern_dead() {
-    has_edits!(
-        "alive@{ dead, ... }: alive",
-        "alive@{ ... }: alive"
-    );
+    has_edits!("alive@{ dead, ... }: alive", "alive@{ ... }: alive");
 }
 
 #[test]
 fn lambda_pattern_default_dead() {
-    has_edits!(
-        "alive@{ dead ? true, ... }: alive",
-        "alive@{ ... }: alive"
-    );
+    has_edits!("alive@{ dead ? true, ... }: alive", "alive@{ ... }: alive");
 }
 
 #[test]

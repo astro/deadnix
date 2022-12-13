@@ -1,7 +1,7 @@
-use std::fs;
 use clap::{Arg, ArgAction, Command};
 #[cfg(feature = "json-out")]
 use serde_json::json;
+use std::fs;
 
 mod binding;
 mod dead_code;
@@ -72,7 +72,7 @@ fn main() {
             Arg::new("help")
                 .long("help")
                 .global(true)
-                .action(ArgAction::Help)
+                .action(ArgAction::Help),
         )
         .arg(
             Arg::new("FAIL_ON_REPORTS")
@@ -110,57 +110,69 @@ fn main() {
     let is_visible = if matches.get_flag("HIDDEN") {
         |_: &walkdir::DirEntry| true
     } else {
-        |entry: &walkdir::DirEntry| entry.file_name()
-            .to_str()
-            .map_or(false, |s| s == "." || ! s.starts_with('.'))
+        |entry: &walkdir::DirEntry| {
+            entry
+                .file_name()
+                .to_str()
+                .map_or(false, |s| s == "." || !s.starts_with('.'))
+        }
     };
-    let output_format = matches.get_one::<String>("OUTPUT_FORMAT")
+    let output_format = matches
+        .get_one::<String>("OUTPUT_FORMAT")
         .map(String::as_str);
     let output_format = match output_format {
         Some("human-readable") => OutputFormat::HumanReadable,
         #[cfg(feature = "json-out")]
         Some("json") => OutputFormat::Json,
         #[cfg(not(feature = "json-out"))]
-        Some("json") => panic!("`deadnix` needs to be built with `json-out` feature flag for JSON output format."),
+        Some("json") => panic!(
+            "`deadnix` needs to be built with `json-out` feature flag for JSON output format."
+        ),
         _ => panic!("Unknown output format."), // clap shouldn't allow this case
     };
 
-    let file_paths = matches.get_many::<String>("FILE_PATHS").expect("FILE_PATHS");
+    let file_paths = matches
+        .get_many::<String>("FILE_PATHS")
+        .expect("FILE_PATHS");
     let files = file_paths.flat_map(|path| {
         let meta = fs::metadata(path);
         let files: Box<dyn Iterator<Item = String>> = match meta {
             // scan directory
-            Ok(meta) if meta.is_dir() =>
-                Box::new(
-                    walkdir::WalkDir::new(path)
-                        .into_iter()
-                        .filter_entry(is_visible)
-                        .map(Result::unwrap)
-                        .filter(|entry| {
-                            entry.file_type().is_file()
-                                && entry.path().extension().map_or(false, |ext| ext.eq_ignore_ascii_case("nix"))
-                        })
-                        .map(|entry| entry.path().display().to_string())
-                ),
+            Ok(meta) if meta.is_dir() => Box::new(
+                walkdir::WalkDir::new(path)
+                    .into_iter()
+                    .filter_entry(is_visible)
+                    .map(Result::unwrap)
+                    .filter(|entry| {
+                        entry.file_type().is_file()
+                            && entry
+                                .path()
+                                .extension()
+                                .map_or(false, |ext| ext.eq_ignore_ascii_case("nix"))
+                    })
+                    .map(|entry| entry.path().display().to_string()),
+            ),
 
             // single file
-            Ok(_) =>
-                Box::new([path.to_string()].into_iter()),
+            Ok(_) => Box::new([path.to_string()].into_iter()),
 
             // error
             Err(error) => {
                 match output_format {
-                    OutputFormat::HumanReadable =>
-                        eprintln!("Error stating file {}: {}", path, error),
+                    OutputFormat::HumanReadable => {
+                        eprintln!("Error stating file {}: {}", path, error)
+                    }
 
                     #[cfg(feature = "json-out")]
-                    OutputFormat::Json =>
-                        println!("{}", json!({
+                    OutputFormat::Json => println!(
+                        "{}",
+                        json!({
                             "file": path,
                             "results": [{
                                 "message": format!("{}", error),
                             }],
-                        })),
+                        })
+                    ),
                 }
                 Box::new([].into_iter())
             }
@@ -172,17 +184,20 @@ fn main() {
             Ok(content) => content,
             Err(error) => {
                 match output_format {
-                    OutputFormat::HumanReadable =>
-                        eprintln!("Error reading file {}: {}", file, error),
+                    OutputFormat::HumanReadable => {
+                        eprintln!("Error reading file {}: {}", file, error)
+                    }
 
                     #[cfg(feature = "json-out")]
-                    OutputFormat::Json =>
-                        println!("{}", json!({
+                    OutputFormat::Json => println!(
+                        "{}",
+                        json!({
                             "file": file,
                             "results": [{
                                 "message": format!("{}", error),
                             }],
-                        })),
+                        })
+                    ),
                 }
                 continue;
             }
@@ -193,21 +208,24 @@ fn main() {
 
         if !errors.is_empty() {
             match output_format {
-                OutputFormat::HumanReadable =>
+                OutputFormat::HumanReadable => {
                     for error in errors {
                         eprintln!("Error parsing file {}: {}", file, error);
-                    },
+                    }
+                }
 
                 #[cfg(feature = "json-out")]
-                OutputFormat::Json =>
-                    println!("{}", json!({
+                OutputFormat::Json => println!(
+                    "{}",
+                    json!({
                         "file": file,
                         "results": errors.into_iter()
                             .map(|error| json!({
                                 "message": format!("{}", error),
                             }))
                             .collect::<Vec<_>>(),
-                    })),
+                    })
+                ),
             }
             continue;
         }
@@ -216,12 +234,14 @@ fn main() {
         report_count += results.len();
         if !quiet && !results.is_empty() {
             match output_format {
-                OutputFormat::HumanReadable =>
-                    crate::report::print(file.to_string(), &content, &results),
+                OutputFormat::HumanReadable => {
+                    crate::report::print(file.to_string(), &content, &results)
+                }
 
                 #[cfg(feature = "json-out")]
-                OutputFormat::Json =>
-                    crate::report::print_json(&file.to_string(), &content, &results),
+                OutputFormat::Json => {
+                    crate::report::print_json(&file.to_string(), &content, &results)
+                }
             };
         }
         if edit {

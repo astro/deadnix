@@ -20,8 +20,18 @@ impl PartialEq for Binding {
 impl Eq for Binding {}
 
 impl Binding {
-    pub fn new(name: Ident, body_node: SyntaxNode<NixLanguage>, decl_node: SyntaxNode<NixLanguage>, mortal: bool) -> Self {
-        Binding { name, body_node, decl_node, mortal }
+    pub fn new(
+        name: Ident,
+        body_node: SyntaxNode<NixLanguage>,
+        decl_node: SyntaxNode<NixLanguage>,
+        mortal: bool,
+    ) -> Self {
+        Binding {
+            name,
+            body_node,
+            decl_node,
+            mortal,
+        }
     }
 
     pub fn is_mortal(&self) -> bool {
