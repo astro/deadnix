@@ -82,7 +82,7 @@ fn dead_to_edit(
                             end = usize::from(next.text_range().end());
                         }
                     }
-                    replacement = Some("".to_string());
+                    replacement = Some(String::new());
                     replace_node = pattern_bind_node;
                 }
             } else {
@@ -97,7 +97,7 @@ fn dead_to_edit(
                     if token.kind() == SyntaxKind::TOKEN_COMMA {
                         // up to the next comma
                         end = usize::from(token.text_range().end());
-                        replacement = Some("".to_string());
+                        replacement = Some(String::new());
                         break;
                     } else if token.kind() != SyntaxKind::TOKEN_WHITESPACE {
                         // delete only whitespace
@@ -113,7 +113,7 @@ fn dead_to_edit(
 
         Scope::LetIn(let_in) => {
             if let_in.entries().any(|entry| *entry.node() == dead_code.binding.decl_node) {
-                replacement = Some("".to_string());
+                replacement = Some(String::new());
             } else if let Some(ident) = let_in.inherits().flat_map(|inherit| {
                 inherit.idents()
                     .filter(|ident| *ident.node() == dead_code.binding.decl_node)
@@ -122,7 +122,7 @@ fn dead_to_edit(
                 start = usize::from(range.start());
                 end = usize::from(range.end());
                 replace_node = ident.node().clone();
-                replacement = Some("".to_string());
+                replacement = Some(String::new());
             }
         }
 
@@ -160,7 +160,7 @@ fn remove_empty_scopes(node: &SyntaxNode<NixLanguage>, edits: &mut Vec<Edit>) {
                 edits.push(Edit {
                     start,
                     end,
-                    replacement: "".to_string(),
+                    replacement: String::new(),
                 });
             }
         }
@@ -180,7 +180,7 @@ fn remove_empty_scopes(node: &SyntaxNode<NixLanguage>, edits: &mut Vec<Edit>) {
                 edits.push(Edit {
                     start,
                     end,
-                    replacement: "".to_string(),
+                    replacement: String::new(),
                 });
             }
         }
