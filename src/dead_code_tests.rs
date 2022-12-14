@@ -90,7 +90,8 @@ fn let_in_inherit_dead_multi() {
 
 #[test]
 fn let_in_inherit_dead_recursive_multi() {
-    let results = run("let inherit (grave) dead1; inherit (dead1) dead2; inherit (dead2) dead3; in false");
+    let results =
+        run("let inherit (grave) dead1; inherit (dead1) dead2; inherit (dead2) dead3; in false");
     assert_eq!(3, results.len());
     assert_eq!(results[0].binding.name.as_str(), "dead1");
     assert_eq!(results[1].binding.name.as_str(), "dead2");

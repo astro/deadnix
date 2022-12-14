@@ -4,7 +4,10 @@ use rnix::{
     NixLanguage,
 };
 use rowan::api::SyntaxNode;
-use std::{collections::{HashMap, HashSet}, fmt};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt,
+};
 
 #[derive(Debug, Clone)]
 pub struct DeadCode {
@@ -53,17 +56,19 @@ impl Settings {
         if let Some(scope) = Scope::new(node) {
             if !(self.no_lambda_arg && scope.is_lambda_arg()) {
                 for binding in scope.bindings() {
-                    if binding.is_mortal()
-                    && !(self.no_underscore && binding.name.as_str().starts_with('_'))
-                    && !(self.no_lambda_pattern_names && scope.is_lambda_pattern_name(&binding.name))
-                    && !scope.bodies().any(|body| {
-                        // exclude this binding's own node
-                        body != binding.body_node &&
-                        // excluding already unused results
-                        dead.get(&body).is_none() &&
-                        // find if used anywhere
-                        usage::find(&binding.name, &body)
-                    }) {
+                    if !(!binding.is_mortal()
+                        || scope.bodies().any(|body| {
+                            // exclude this binding's own node
+                            body != binding.body_node &&
+                            // excluding already unused results
+                            dead.get(&body).is_none() &&
+                            // find if used anywhere
+                            usage::find(&binding.name, &body)
+                        })
+                        || self.no_underscore && binding.name.as_str().starts_with('_')
+                        || self.no_lambda_pattern_names
+                            && scope.is_lambda_pattern_name(&binding.name))
+                    {
                         dead.insert(binding.body_node.clone());
                         results.insert(
                             binding.decl_node.clone(),

@@ -1,11 +1,11 @@
-use std::fmt;
+use crate::{binding::Binding, usage};
+use ariadne::Color;
 use rnix::{
     types::{AttrSet, EntryHolder, Ident, Lambda, LetIn, Pattern, TokenWrapper, TypedNode},
     NixLanguage, SyntaxKind,
 };
 use rowan::api::SyntaxNode;
-use ariadne::Color;
-use crate::{binding::Binding, usage};
+use std::fmt;
 
 /// AST subtree that declares variables
 #[derive(Debug, Clone)]
@@ -72,9 +72,9 @@ impl Scope {
 
     pub fn is_lambda_pattern_name(&self, name: &Ident) -> bool {
         if let Scope::LambdaPattern(pattern, _) = self {
-            pattern.entries().any(|entry|
-                entry.name().expect("entry.name").as_str() == name.as_str()
-            )
+            pattern
+                .entries()
+                .any(|entry| entry.name().expect("entry.name").as_str() == name.as_str())
         } else {
             false
         }
@@ -83,25 +83,31 @@ impl Scope {
     /// The Bindings this Scope introduces
     pub fn bindings(&self) -> Box<dyn Iterator<Item = Binding>> {
         match self {
-            Scope::LambdaPattern(pattern, _) => {
-                Box::new(
-                    pattern
-                        .at()
-                        .map(|name| {
-                            let binding_node = name.node().clone();
-                            Binding::new(name, binding_node.clone(), binding_node, true)
-                        })
-                        .into_iter()
-                        .chain(pattern.entries().map(move |entry| {
-                            let name = entry.name().expect("entry.name");
-                            Binding::new(name, entry.node().clone(), entry.node().clone(), true)
-                        })),
-                )
-            }
+            Scope::LambdaPattern(pattern, _) => Box::new(
+                pattern
+                    .at()
+                    .map(|name| {
+                        let binding_node = name.node().clone();
+                        Binding::new(name, binding_node.clone(), binding_node, true)
+                    })
+                    .into_iter()
+                    .chain(pattern.entries().map(move |entry| {
+                        let name = entry.name().expect("entry.name");
+                        Binding::new(name, entry.node().clone(), entry.node().clone(), true)
+                    })),
+            ),
 
             Scope::LambdaArg(name, _) => {
                 let mortal = !name.as_str().starts_with('_');
-                Box::new(Some(Binding::new(name.clone(), name.node().clone(), name.node().clone(), mortal)).into_iter())
+                Box::new(
+                    Some(Binding::new(
+                        name.clone(),
+                        name.node().clone(),
+                        name.node().clone(),
+                        mortal,
+                    ))
+                    .into_iter(),
+                )
             }
 
             Scope::LetIn(let_in) => Box::new(
@@ -113,12 +119,10 @@ impl Scope {
                         } else {
                             inherit.node().clone()
                         };
-                        inherit
-                            .idents()
-                            .map(move |name| {
-                                let name_node = name.node().clone();
-                                Binding::new(name, body_node.clone(), name_node, true)
-                            })
+                        inherit.idents().map(move |name| {
+                            let name_node = name.node().clone();
+                            Binding::new(name, body_node.clone(), name_node, true)
+                        })
                     })
                     .chain(let_in.entries().map(|entry| {
                         let key = entry
@@ -137,12 +141,10 @@ impl Scope {
                     .inherits()
                     .flat_map(|inherit| {
                         let binding_node = inherit.node().clone();
-                        inherit
-                            .idents()
-                            .map(move |name| {
-                                let name_node = name.node().clone();
-                                Binding::new(name, binding_node.clone(), name_node, false)
-                            })
+                        inherit.idents().map(move |name| {
+                            let name_node = name.node().clone();
+                            Binding::new(name, binding_node.clone(), name_node, false)
+                        })
                     })
                     .chain(attr_set.entries().filter_map(|entry| {
                         let key = entry
@@ -153,7 +155,12 @@ impl Scope {
                             .expect("key.path.next");
                         if key.kind() == SyntaxKind::NODE_IDENT {
                             let name = Ident::cast(key).expect("Ident::cast");
-                            Some(Binding::new(name, entry.node().clone(), entry.node().clone(), false))
+                            Some(Binding::new(
+                                name,
+                                entry.node().clone(),
+                                entry.node().clone(),
+                                false,
+                            ))
                         } else {
                             None
                         }
@@ -220,14 +227,10 @@ impl Scope {
 
     pub fn color(&self) -> Color {
         match self {
-            Scope::LambdaPattern(_, _) =>
-                Color::Magenta,
-            Scope::LambdaArg(_, _) =>
-                Color::Cyan,
-            Scope::LetIn(_) =>
-                Color::Red,
-            Scope::RecAttrSet(_) =>
-                Color::Yellow,
+            Scope::LambdaPattern(_, _) => Color::Magenta,
+            Scope::LambdaArg(_, _) => Color::Cyan,
+            Scope::LetIn(_) => Color::Red,
+            Scope::RecAttrSet(_) => Color::Yellow,
         }
     }
 }

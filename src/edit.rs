@@ -29,12 +29,8 @@ fn apply_edits<'a>(src: &str, edits: impl Iterator<Item = &'a Edit>) -> String {
 /// Deletes `nodes` from content
 ///
 /// assumes `node` to be presorted
-pub fn edit_dead_code(
-    original: &str,
-    dead: impl Iterator<Item = DeadCode>,
-) -> (String, bool) {
-    let mut edits = dead.filter_map(dead_to_edit)
-        .collect::<Vec<_>>();
+pub fn edit_dead_code(original: &str, dead: impl Iterator<Item = DeadCode>) -> (String, bool) {
+    let mut edits = dead.filter_map(dead_to_edit).collect::<Vec<_>>();
     edits.sort_unstable_by(|e1, e2| {
         if e1.start == e2.start {
             e1.end.cmp(&e2.end)
@@ -58,9 +54,7 @@ pub fn edit_dead_code(
     }
 }
 
-fn dead_to_edit(
-    dead_code: DeadCode,
-) -> Option<Edit> {
+fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
     let range = dead_code.binding.decl_node.text_range();
     let mut start = usize::from(range.start());
     let mut end = usize::from(range.end());
@@ -68,10 +62,15 @@ fn dead_to_edit(
     let mut replacement = None;
     match dead_code.scope {
         Scope::LambdaPattern(pattern, _) => {
-            if pattern.at().map_or(false, |at| *at.node() == dead_code.binding.decl_node) {
-                if let Some(pattern_bind_node) = pattern.node().children().find(|child|
-                                                                                child.kind() == SyntaxKind::NODE_PAT_BIND
-                ) {
+            if pattern
+                .at()
+                .map_or(false, |at| *at.node() == dead_code.binding.decl_node)
+            {
+                if let Some(pattern_bind_node) = pattern
+                    .node()
+                    .children()
+                    .find(|child| child.kind() == SyntaxKind::NODE_PAT_BIND)
+                {
                     // `dead @ { ... }`, `{ ... } @ dead` forms
                     let pattern_bind_range = pattern_bind_node.text_range();
                     start = usize::from(pattern_bind_range.start());
@@ -82,22 +81,20 @@ fn dead_to_edit(
                             end = usize::from(next.text_range().end());
                         }
                     }
-                    replacement = Some("".to_string());
+                    replacement = Some(String::new());
                     replace_node = pattern_bind_node;
                 }
             } else {
-                let mut tokens = pattern.node().children_with_tokens()
-                    .skip_while(|node|
-                        node.as_node().map_or(true, |node|
-                            *node != dead_code.binding.decl_node
-                        )
-                    );
+                let mut tokens = pattern.node().children_with_tokens().skip_while(|node| {
+                    node.as_node()
+                        .map_or(true, |node| *node != dead_code.binding.decl_node)
+                });
                 tokens.next();
                 for token in tokens {
                     if token.kind() == SyntaxKind::TOKEN_COMMA {
                         // up to the next comma
                         end = usize::from(token.text_range().end());
-                        replacement = Some("".to_string());
+                        replacement = Some(String::new());
                         break;
                     } else if token.kind() != SyntaxKind::TOKEN_WHITESPACE {
                         // delete only whitespace
@@ -112,17 +109,25 @@ fn dead_to_edit(
         }
 
         Scope::LetIn(let_in) => {
-            if let_in.entries().any(|entry| *entry.node() == dead_code.binding.decl_node) {
-                replacement = Some("".to_string());
-            } else if let Some(ident) = let_in.inherits().flat_map(|inherit| {
-                inherit.idents()
-                    .filter(|ident| *ident.node() == dead_code.binding.decl_node)
-            }).next() {
+            if let_in
+                .entries()
+                .any(|entry| *entry.node() == dead_code.binding.decl_node)
+            {
+                replacement = Some(String::new());
+            } else if let Some(ident) = let_in
+                .inherits()
+                .flat_map(|inherit| {
+                    inherit
+                        .idents()
+                        .filter(|ident| *ident.node() == dead_code.binding.decl_node)
+                })
+                .next()
+            {
                 let range = ident.node().text_range();
                 start = usize::from(range.start());
                 end = usize::from(range.end());
                 replace_node = ident.node().clone();
-                replacement = Some("".to_string());
+                replacement = Some(String::new());
             }
         }
 
@@ -160,7 +165,7 @@ fn remove_empty_scopes(node: &SyntaxNode<NixLanguage>, edits: &mut Vec<Edit>) {
                 edits.push(Edit {
                     start,
                     end,
-                    replacement: "".to_string(),
+                    replacement: String::new(),
                 });
             }
         }
@@ -180,7 +185,7 @@ fn remove_empty_scopes(node: &SyntaxNode<NixLanguage>, edits: &mut Vec<Edit>) {
                 edits.push(Edit {
                     start,
                     end,
-                    replacement: "".to_string(),
+                    replacement: String::new(),
                 });
             }
         }
