@@ -160,7 +160,7 @@ fn main() {
             Err(error) => {
                 match output_format {
                     OutputFormat::HumanReadable => {
-                        eprintln!("Error stating file {}: {}", path, error)
+                        eprintln!("Error stating file {}: {}", path, error);
                     }
 
                     #[cfg(feature = "json-out")]
@@ -185,7 +185,7 @@ fn main() {
             Err(error) => {
                 match output_format {
                     OutputFormat::HumanReadable => {
-                        eprintln!("Error reading file {}: {}", file, error)
+                        eprintln!("Error reading file {}: {}", file, error);
                     }
 
                     #[cfg(feature = "json-out")]
@@ -235,12 +235,12 @@ fn main() {
         if !quiet && !results.is_empty() {
             match output_format {
                 OutputFormat::HumanReadable => {
-                    crate::report::print(file.to_string(), &content, &results)
+                    crate::report::print(file.to_string(), &content, &results);
                 }
 
                 #[cfg(feature = "json-out")]
                 OutputFormat::Json => {
-                    crate::report::print_json(&file.to_string(), &content, &results)
+                    crate::report::print_json(&file.to_string(), &content, &results);
                 }
             };
         }
