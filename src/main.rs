@@ -118,7 +118,7 @@ fn main() {
     } else {
         |entry: &walkdir::DirEntry|
             entry.file_name().to_str()
-                 .map_or(false, |s| s == "." || !s.starts_with('.'))
+                 .map_or(false, |s| s == "." || s == ".." || ! s.starts_with('.'))
     };
     let is_included: Box<dyn Fn(&String) -> bool> = if let Some(excludes) = matches.get_many("EXCLUDES") {
         let excludes = excludes.cloned().collect::<HashSet<String>>();
