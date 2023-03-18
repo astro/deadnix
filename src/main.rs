@@ -1,7 +1,7 @@
 use clap::{Arg, ArgAction, Command};
 #[cfg(feature = "json-out")]
 use serde_json::json;
-use std::fs;
+use std::{fs, collections::HashSet};
 
 mod binding;
 mod dead_code;
@@ -90,6 +90,12 @@ fn main() {
                 .help("Output format to use"),
         )
         .arg(
+            Arg::new("EXCLUDES")
+                .long("exclude")
+                .num_args(1..)
+                .help("Files to exclude from analysis"),
+        )
+        .arg(
             Arg::new("FILE_PATHS")
                 .num_args(1..)
                 .default_value(".")
@@ -110,12 +116,15 @@ fn main() {
     let is_visible = if matches.get_flag("HIDDEN") {
         |_: &walkdir::DirEntry| true
     } else {
-        |entry: &walkdir::DirEntry| {
-            entry
-                .file_name()
-                .to_str()
-                .map_or(false, |s| s == "." || !s.starts_with('.'))
-        }
+        |entry: &walkdir::DirEntry|
+            entry.file_name().to_str()
+                 .map_or(false, |s| s == "." || !s.starts_with('.'))
+    };
+    let is_included: Box<dyn Fn(&String) -> bool> = if let Some(excludes) = matches.get_many("EXCLUDES") {
+        let excludes = excludes.cloned().collect::<HashSet<String>>();
+        Box::new(move |s| ! excludes.contains(s))
+    } else {
+        Box::new(|_| true)
     };
     let output_format = matches
         .get_one::<String>("OUTPUT_FORMAT")
@@ -150,7 +159,8 @@ fn main() {
                                 .extension()
                                 .map_or(false, |ext| ext.eq_ignore_ascii_case("nix"))
                     })
-                    .map(|entry| entry.path().display().to_string()),
+                    .map(|entry| entry.path().display().to_string())
+                    .filter(&is_included)
             ),
 
             // single file

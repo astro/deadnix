@@ -21,35 +21,29 @@ Arguments:
   [FILE_PATHS]...  .nix files, or directories with .nix files inside [default: .]
 
 Options:
-  -l, --no-lambda-arg
-          Don't check lambda parameter arguments
-  -L, --no-lambda-pattern-names
-          Don't check lambda attrset pattern names (don't break nixpkgs callPackage)
-  -_, --no-underscore
-          Don't check any bindings that start with a _
-  -q, --quiet
-          Don't print dead code report
-  -e, --edit
-          Remove unused code and write to source file
-  -h, --hidden
-          Recurse into hidden subdirectories and process hidden .*.nix files
+  -l, --no-lambda-arg                  Don't check lambda parameter arguments
+  -L, --no-lambda-pattern-names        Don't check lambda attrset pattern names (don't break nixpkgs callPackage)
+  -_, --no-underscore                  Don't check any bindings that start with a _
+  -q, --quiet                          Don't print dead code report
+  -e, --edit                           Remove unused code and write to source file
+  -h, --hidden                         Recurse into hidden subdirectories and process hidden .*.nix files
       --help
-          
-  -f, --fail
-          Exit with 1 if unused code has been found
-  -o, --output-format <OUTPUT_FORMAT>
-          Output format to use [default: human-readable] [possible values: human-readable, json]
-  -V, --version
-          Print version information
+  -f, --fail                           Exit with 1 if unused code has been found
+  -o, --output-format <OUTPUT_FORMAT>  Output format to use [default: human-readable] [possible values: human-readable, json]
+      --exclude <EXCLUDES>...          Files to exclude from analysis
+  -V, --version                        Print version
 ```
 
 Reports contain ANSI color escape codes unless the
 [`$NO_COLOR`](https://no-color.org/) environment variable is set.
 
+The `--exclude` parameter accepts multiple paths. Separate them with
+`--` to pass `[FILE_PATHS]...`.
+
 ### Scan for unused code
 
 ```console
-$ nix run github:astro/deadnix example.nix                                               
+$ nix run github:astro/deadnix example.nix
 Warning: Unused declarations were found.
     ╭─[example.nix:1:1]
   1 │unusedArgs@{ unusedArg, usedArg, ... }:
