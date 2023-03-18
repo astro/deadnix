@@ -95,7 +95,8 @@ rev: da39a3ee5e6b4b0d3255bfef95601890afd80709  # frozen: v1.2.3
 
 ### Renaming of all unused to lambda args to start with `_`
 
-If you disfavor marking them as unused, use option `--no-lambda-arg`.
+If you disfavor marking them as unused, use option
+`-l`/`--no-lambda-arg`.
 
 
 ### nixpkgs `callPackages` with multiple imports
@@ -109,7 +110,7 @@ recognized as dead in the package source file that is imported by
 `callPackage`, rendering it unable to guess the dependencies to call
 the packages with.
 
-Use option `--no-lambda-pattern-names` in this case.
+Use option `-L`/`--no-lambda-pattern-names` in this case.
 
 
 ## What if the produced reports are wrong?
