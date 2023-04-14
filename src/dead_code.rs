@@ -1,9 +1,8 @@
 use crate::{binding::Binding, scope::Scope, usage};
 use rnix::{
-    types::{TokenWrapper, TypedNode},
     NixLanguage,
 };
-use rowan::api::SyntaxNode;
+use rowan::{api::SyntaxNode, ast::AstNode};
 use std::{
     collections::{HashMap, HashSet},
     fmt,
@@ -17,7 +16,7 @@ pub struct DeadCode {
 
 impl fmt::Display for DeadCode {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "Unused {}: {}", self.scope, self.binding.name.as_str())
+        write!(fmt, "Unused {}: {}", self.scope, self.binding.name)
     }
 }
 
@@ -41,7 +40,7 @@ impl Settings {
         }
 
         let mut results = results.into_values().collect::<Vec<_>>();
-        results.sort_unstable_by_key(|result| result.binding.name.node().text_range().start());
+        results.sort_unstable_by_key(|result| result.binding.name.syntax().text_range().start());
         results
     }
 
@@ -65,7 +64,7 @@ impl Settings {
                             // find if used anywhere
                             usage::find(&binding.name, &body)
                         })
-                        || self.no_underscore && binding.name.as_str().starts_with('_')
+                        || self.no_underscore && binding.name.syntax().text().char_at(0.into()) == Some('_')
                         || self.no_lambda_pattern_names
                             && scope.is_lambda_pattern_name(&binding.name))
                     {

@@ -1,9 +1,9 @@
 use crate::scope::Scope;
 use rnix::{
-    types::{Ident, TokenWrapper, TypedNode},
+    ast::Ident,
     NixLanguage, SyntaxKind,
 };
-use rowan::api::SyntaxNode;
+use rowan::{api::SyntaxNode, ast::AstNode};
 
 /// find out if `name` is used in `node`
 pub fn find(name: &Ident, node: &SyntaxNode<NixLanguage>) -> bool {
@@ -13,7 +13,7 @@ pub fn find(name: &Ident, node: &SyntaxNode<NixLanguage>) -> bool {
         }
 
         for binding in scope.bindings() {
-            if binding.name.as_str() == name.as_str() {
+            if binding.name.syntax().text() == name.syntax().text() {
                 // shadowed by a a new child scope that redefines the
                 // variable with the same name
                 return false;
@@ -21,8 +21,17 @@ pub fn find(name: &Ident, node: &SyntaxNode<NixLanguage>) -> bool {
         }
     }
 
-    if node.kind() == SyntaxKind::NODE_IDENT {
-        Ident::cast(node.clone()).expect("Ident::cast").as_str() == name.as_str()
+    let ident = if node.kind() == SyntaxKind::NODE_IDENT {
+        if let Some(ident) = Ident::cast(node.clone()) {
+            Some(ident)
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    if let Some(ident) = &ident {
+        ident.syntax().text() == name.syntax().text()
     } else {
         node.children().any(|node| find(name, &node))
     }

@@ -1,6 +1,7 @@
 use crate::dead_code::DeadCode;
 use ariadne::{sources, Config, Label, Report, ReportKind};
-use rnix::{types::TypedNode, TextSize};
+use rnix::TextSize;
+use rowan::ast::AstNode;
 use std::env;
 
 #[cfg(feature = "json-out")]
@@ -10,7 +11,7 @@ use serde_json::json;
 pub fn print(file: String, content: &str, results: &[DeadCode]) {
     let no_color = env::var("NO_COLOR").is_ok();
 
-    let first_result_range = results[0].binding.name.node().text_range();
+    let first_result_range = results[0].binding.name.syntax().text_range();
     let mut builder = Report::build(
         ReportKind::Warning,
         file.clone(),
@@ -28,7 +29,7 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
     for result in results {
         order -= 1;
 
-        let range = result.binding.name.node().text_range();
+        let range = result.binding.name.syntax().text_range();
         let start_byte = usize::from(range.start());
         while content_bytes < start_byte {
             content_bytes += char_bytes.next().unwrap();
@@ -71,7 +72,7 @@ pub fn print_json(file: &str, content: &str, results: &[DeadCode]) {
     let json = json!({
         "file": file,
         "results": results.iter().map(|result| {
-            let range = result.binding.name.node().text_range();
+            let range = result.binding.name.syntax().text_range();
             let start = usize::from(range.start());
             let mut line_number = 0;
             let mut line_offset = 0;

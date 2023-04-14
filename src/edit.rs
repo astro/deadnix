@@ -1,9 +1,9 @@
 use crate::{dead_code::DeadCode, scope::Scope};
 use rnix::{
-    types::{EntryHolder, Inherit, LetIn, TokenWrapper, TypedNode},
+    ast::{Inherit, LetIn, HasEntry},
     NixLanguage, SyntaxKind,
 };
-use rowan::api::SyntaxNode;
+use rowan::{api::SyntaxNode, ast::AstNode};
 
 #[derive(Debug)]
 struct Edit {
@@ -44,9 +44,9 @@ pub fn edit_dead_code(original: &str, dead: impl Iterator<Item = DeadCode>) -> (
     let edited = apply_edits(original, edits.iter());
 
     // remove empty `let in`
-    let ast = rnix::parse(&edited);
+    let ast = rnix::Root::parse(&edited);
     let mut let_in_edits = Vec::new();
-    remove_empty_scopes(&ast.node(), &mut let_in_edits);
+    remove_empty_scopes(&ast.syntax(), &mut let_in_edits);
     if let_in_edits.is_empty() {
         (edited, has_changes)
     } else {
@@ -63,11 +63,11 @@ fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
     match dead_code.scope {
         Scope::LambdaPattern(pattern, _) => {
             if pattern
-                .at()
-                .map_or(false, |at| *at.node() == dead_code.binding.decl_node)
+                .pat_bind()
+                .map_or(false, |at| at.ident().expect("at.ident").syntax() == &dead_code.binding.decl_node)
             {
                 if let Some(pattern_bind_node) = pattern
-                    .node()
+                    .syntax()
                     .children()
                     .find(|child| child.kind() == SyntaxKind::NODE_PAT_BIND)
                 {
@@ -85,7 +85,7 @@ fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
                     replace_node = pattern_bind_node;
                 }
             } else {
-                let mut tokens = pattern.node().children_with_tokens().skip_while(|node| {
+                let mut tokens = pattern.syntax().children_with_tokens().skip_while(|node| {
                     node.as_node()
                         .map_or(true, |node| *node != dead_code.binding.decl_node)
                 });
@@ -105,28 +105,28 @@ fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
         }
 
         Scope::LambdaArg(name, _) => {
-            replacement = Some(format!("_{}", name.as_str()));
+            replacement = Some(format!("_{}", name));
         }
 
         Scope::LetIn(let_in) => {
             if let_in
-                .entries()
-                .any(|entry| *entry.node() == dead_code.binding.decl_node)
+                .attrpath_values()
+                .any(|entry| *entry.syntax() == dead_code.binding.decl_node)
             {
                 replacement = Some(String::new());
             } else if let Some(ident) = let_in
                 .inherits()
                 .flat_map(|inherit| {
                     inherit
-                        .idents()
-                        .filter(|ident| *ident.node() == dead_code.binding.decl_node)
+                        .attrs()
+                        .filter(|attr| attr.syntax() == &dead_code.binding.decl_node)
                 })
                 .next()
             {
-                let range = ident.node().text_range();
+                let range = ident.syntax().text_range();
                 start = usize::from(range.start());
                 end = usize::from(range.end());
-                replace_node = ident.node().clone();
+                replace_node = ident.syntax().clone();
                 replacement = Some(String::new());
             }
         }
@@ -157,11 +157,11 @@ fn remove_empty_scopes(node: &SyntaxNode<NixLanguage>, edits: &mut Vec<Edit>) {
             let let_in = LetIn::cast(node.clone()).expect("LetIn::cast");
             if let_in
                 .inherits()
-                .all(|inherit| inherit.idents().next().is_none())
-                && let_in.entries().next().is_none()
+                .all(|inherit| inherit.attrs().next().is_none())
+                && let_in.attrpath_values().next().is_none()
             {
                 let start = usize::from(node.text_range().start());
-                let end = usize::from(let_in.body().expect("let_in.body").text_range().start());
+                let end = usize::from(let_in.body().expect("let_in.body").syntax().text_range().start());
                 edits.push(Edit {
                     start,
                     end,
@@ -173,7 +173,7 @@ fn remove_empty_scopes(node: &SyntaxNode<NixLanguage>, edits: &mut Vec<Edit>) {
         // remove empty `inherit;` and `inherit (...);` constructs
         SyntaxKind::NODE_INHERIT => {
             let inherit = Inherit::cast(node.clone()).expect("Inherit::cast");
-            if inherit.idents().next().is_none() {
+            if inherit.attrs().next().is_none() {
                 let mut start = usize::from(node.text_range().start());
                 // remove whitespace before node
                 if let Some(prev) = node.prev_sibling_or_token() {

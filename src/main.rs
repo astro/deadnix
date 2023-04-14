@@ -213,7 +213,7 @@ fn main() {
             }
         };
 
-        let ast = rnix::parse(&content);
+        let ast = rnix::Root::parse(&content);
         let errors = ast.errors();
 
         if !errors.is_empty() {
@@ -240,7 +240,7 @@ fn main() {
             continue;
         }
 
-        let results = settings.find_dead_code(&ast.node());
+        let results = settings.find_dead_code(&ast.syntax());
         report_count += results.len();
         if !quiet && !results.is_empty() {
             match output_format {
