@@ -55,8 +55,14 @@ impl Settings {
         if let Some(scope) = Scope::new(node) {
             if !(self.no_lambda_arg && scope.is_lambda_arg()) {
                 for binding in scope.bindings() {
-                    if !(!binding.is_mortal()
-                        || scope.bodies().any(|body| {
+                    if self.no_underscore && binding.name.syntax().text().char_at(0.into()) == Some('_') {
+                        continue;
+                    }
+                    if self.no_lambda_pattern_names && scope.is_lambda_pattern_name(&binding.name) {
+                        continue;
+                    }
+
+                    if binding.is_mortal() && ! scope.bodies().any(|body| {
                             // exclude this binding's own node
                             body != binding.body_node &&
                             // excluding already unused results
@@ -64,9 +70,6 @@ impl Settings {
                             // find if used anywhere
                             usage::find(&binding.name, &body)
                         })
-                        || self.no_underscore && binding.name.syntax().text().char_at(0.into()) == Some('_')
-                        || self.no_lambda_pattern_names
-                            && scope.is_lambda_pattern_name(&binding.name))
                     {
                         dead.insert(binding.body_node.clone());
                         results.insert(

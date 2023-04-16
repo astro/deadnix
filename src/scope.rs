@@ -199,7 +199,7 @@ impl Scope {
                     .chain(
                         let_in.body().map(|body| body.syntax().clone())
                     ),
-            ) },
+            ),
 
             Scope::RecAttrSet(attr_set) => Box::new(
                 attr_set
