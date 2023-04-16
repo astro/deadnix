@@ -12,14 +12,6 @@ pub struct Binding {
     mortal: bool,
 }
 
-impl PartialEq for Binding {
-    fn eq(&self, other: &Self) -> bool {
-        self.decl_node == other.decl_node &&
-            self.name.syntax().text() == other.name.syntax().text()
-    }
-}
-impl Eq for Binding {}
-
 impl Binding {
     pub fn new(
         name: Ident,
