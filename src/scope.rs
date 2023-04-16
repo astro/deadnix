@@ -38,7 +38,7 @@ impl Scope {
                 match param {
                     Param::IdentParam(ident_param) => {
                         let name = ident_param.ident().expect("IdentParam.ident()");
-                        Some(Scope::LambdaArg(name, body.clone()))
+                        Some(Scope::LambdaArg(name, body))
                     }
                     Param::Pattern(pattern) => {
                         Some(Scope::LambdaPattern(pattern, body))

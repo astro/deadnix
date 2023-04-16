@@ -105,7 +105,7 @@ fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
         }
 
         Scope::LambdaArg(name, _) => {
-            replacement = Some(format!("_{}", name));
+            replacement = Some(format!("_{name}"));
         }
 
         Scope::LetIn(let_in) => {

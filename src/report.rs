@@ -45,7 +45,7 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
 
         // add report label
         let mut label = Label::new((file.clone(), start_char..end_char))
-            .with_message(format!("{}", result))
+            .with_message(format!("{result}"))
             .with_order(order as i32);
         if !no_color {
             label = label.with_color(result.scope.color());
@@ -84,12 +84,12 @@ pub fn print_json(file: &str, content: &str, results: &[DeadCode]) {
                 line_offset = offset;
             }
             json!({
-                "message": format!("{}", result),
+                "message": format!("{result}"),
                 "line": line_number,
                 "column": start - line_offset + 1,
                 "endColumn": usize::from(range.end()) - line_offset + 1,
             })
         }).collect::<serde_json::Value>(),
     });
-    println!("{}", json);
+    println!("{json}");
 }

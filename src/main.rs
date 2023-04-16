@@ -170,7 +170,7 @@ fn main() {
             Err(error) => {
                 match output_format {
                     OutputFormat::HumanReadable => {
-                        eprintln!("Error stating file {}: {}", path, error);
+                        eprintln!("Error stating file {path}: {error}");
                     }
 
                     #[cfg(feature = "json-out")]
@@ -179,7 +179,7 @@ fn main() {
                         json!({
                             "file": path,
                             "results": [{
-                                "message": format!("{}", error),
+                                "message": format!("{error}"),
                             }],
                         })
                     ),
@@ -195,7 +195,7 @@ fn main() {
             Err(error) => {
                 match output_format {
                     OutputFormat::HumanReadable => {
-                        eprintln!("Error reading file {}: {}", file, error);
+                        eprintln!("Error reading file {file}: {error}");
                     }
 
                     #[cfg(feature = "json-out")]
@@ -204,7 +204,7 @@ fn main() {
                         json!({
                             "file": file,
                             "results": [{
-                                "message": format!("{}", error),
+                                "message": format!("{error}"),
                             }],
                         })
                     ),
@@ -220,7 +220,7 @@ fn main() {
             match output_format {
                 OutputFormat::HumanReadable => {
                     for error in errors {
-                        eprintln!("Error parsing file {}: {}", file, error);
+                        eprintln!("Error parsing file {file}: {error}");
                     }
                 }
 
@@ -229,9 +229,9 @@ fn main() {
                     "{}",
                     json!({
                         "file": file,
-                        "results": errors.into_iter()
+                        "results": errors.iter()
                             .map(|error| json!({
-                                "message": format!("{}", error),
+                                "message": format!("{error}"),
                             }))
                             .collect::<Vec<_>>(),
                     })

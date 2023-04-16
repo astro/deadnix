@@ -22,11 +22,7 @@ pub fn find(name: &Ident, node: &SyntaxNode<NixLanguage>) -> bool {
     }
 
     let ident = if node.kind() == SyntaxKind::NODE_IDENT {
-        if let Some(ident) = Ident::cast(node.clone()) {
-            Some(ident)
-        } else {
-            None
-        }
+        Ident::cast(node.clone())
     } else {
         None
     };
