@@ -1,5 +1,6 @@
 #![cfg(test)]
 
+use rowan::ast::AstNode;
 use crate::dead_code::{DeadCode, Settings};
 
 fn run(content: &str) -> Vec<DeadCode> {
@@ -219,13 +220,64 @@ fn let_inherit_in_rec_attrset_alive() {
 
 #[test]
 fn skip() {
-    let results = run("# deadnix: skip\nlet dead = 0; in alive");
+    let results = run("
+# deadnix: skip
+let dead = 0;
+in alive
+    ");
     assert_eq!(0, results.len());
 }
 
 #[test]
 fn skip_no_multiline() {
-    let results = run("# deadnix: skip\nlet dead1 = 0;\n dead2 = 1;\nin alive");
+    let results = run("
+# deadnix: skip
+let dead1 = 0;
+    dead2 = 1;
+in alive
+    ");
     assert_eq!(1, results.len());
     assert_eq!(results[0].binding.name.to_string(), "dead2");
+}
+
+#[test]
+fn skip_no_comment() {
+    let results = run("
+# deadnix: skip
+# ignore the above statement
+let dead = 1;
+in alive
+    ");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "dead");
+}
+
+#[test]
+fn skip_attrset() {
+    let results = run("
+# deadnix: skip
+{ dead1
+, dead2
+}:
+alive
+    ");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "dead2");
+}
+
+#[test]
+fn shadowed_by_skip() {
+    let nix = "
+let
+  shadowed = 0;
+in let
+# deadnix: skip
+  shadowed = 1;
+in shadowed
+    ";
+    let results = run(nix);
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "shadowed");
+    let first_pos = nix.find("shadowed").unwrap();
+    assert_eq!(usize::from(results[0].binding.name.syntax().text_range().start()), first_pos);
 }
