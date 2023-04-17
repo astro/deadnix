@@ -113,6 +113,16 @@ the packages with.
 Use option `-L`/`--no-lambda-pattern-names` in this case.
 
 
+### Skipping reports for certain declarations
+
+As of 1.1.0 deadnix supports the following pragma to skip check of
+bindings in the following line:
+
+```nix
+# deadnix: skip
+```
+
+
 ## What if the produced reports are wrong?
 
 Please open an issue. Do not forget to include the `.nix` code that
