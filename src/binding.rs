@@ -41,24 +41,30 @@ impl Binding {
         self.mortal
     }
 
+    /// Searches through tokens backwards for PRAGMA_SKIP until at
+    /// least two linebreaks are seen
     pub fn has_pragma_skip(&self) -> bool {
-        let mut token = self.decl_node.first_token().unwrap();
         let mut line_breaks = 0;
-        while line_breaks < 2 {
-            if let Some(prev) = token.prev_token() {
-                token = prev;
+        let mut token = self.decl_node.first_token().unwrap();
+        while let Some(prev) = token.prev_token() {
+            token = prev;
 
-                match token.kind() {
-                    SyntaxKind::TOKEN_WHITESPACE =>
-                        line_breaks += token.text().split('\n').count() - 1,
-                    SyntaxKind::TOKEN_COMMENT if token.text().contains(PRAGMA_SKIP) =>
-                        return true,
-                    _ => {}
+            match token.kind() {
+                SyntaxKind::TOKEN_WHITESPACE => {
+                    line_breaks += token.text().matches('\n').count();
+                    if line_breaks > 1 {
+                        break;
+                    }
                 }
-            } else {
-                break;
+
+                SyntaxKind::TOKEN_COMMENT if token.text().contains(PRAGMA_SKIP) =>
+                    return true,
+
+                _ => {}
             }
         }
+
+        // No PRAGMA_SKIP found
         false
     }
 }
