@@ -62,15 +62,16 @@ impl Settings {
                         continue;
                     }
 
-                    if binding.is_mortal() && ! scope.bodies().any(|body| {
-                            // exclude this binding's own node
-                            body != binding.body_node &&
-                            // excluding already unused results
-                            dead.get(&body).is_none() &&
-                            // find if used anywhere
-                            usage::find(&binding.name, &body)
-                        })
-                    {
+                    if binding.is_mortal()
+                    && ! scope.bodies().any(|body|
+                        // exclude this binding's own node
+                        body != binding.body_node
+                        // excluding already unused results
+                        && dead.get(&body).is_none()
+                        // find if used anywhere
+                        && usage::find(&binding.name, &body)
+                    )
+                    && ! binding.has_pragma_skip() {
                         dead.insert(binding.body_node.clone());
                         results.insert(
                             binding.decl_node.clone(),

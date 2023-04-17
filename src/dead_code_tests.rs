@@ -216,3 +216,16 @@ fn let_inherit_in_rec_attrset_alive() {
     let results = run("let alive = true; in rec { inherit alive; }");
     assert_eq!(0, results.len());
 }
+
+#[test]
+fn skip() {
+    let results = run("# deadnix: skip\nlet dead = 0; in alive");
+    assert_eq!(0, results.len());
+}
+
+#[test]
+fn skip_no_multiline() {
+    let results = run("# deadnix: skip\nlet dead1 = 0;\n dead2 = 1;\nin alive");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "dead2");
+}

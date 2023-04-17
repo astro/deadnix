@@ -1,8 +1,18 @@
 use rnix::{
     ast::Ident,
-    NixLanguage,
+    NixLanguage, SyntaxKind,
 };
 use rowan::api::SyntaxNode;
+
+/// This string in a Nix comment above an unused declaration shall
+/// force us to skip it.
+///
+/// ```nix
+/// let
+///   # deadnix: skip
+///   skeletonsInTheBasement =
+/// ```
+const PRAGMA_SKIP: &str = "deadnix: skip";
 
 #[derive(Debug, Clone)]
 pub struct Binding {
@@ -29,5 +39,26 @@ impl Binding {
 
     pub fn is_mortal(&self) -> bool {
         self.mortal
+    }
+
+    pub fn has_pragma_skip(&self) -> bool {
+        let mut token = self.decl_node.first_token().unwrap();
+        let mut line_breaks = 0;
+        while line_breaks < 2 {
+            if let Some(prev) = token.prev_token() {
+                token = prev;
+
+                match token.kind() {
+                    SyntaxKind::TOKEN_WHITESPACE =>
+                        line_breaks += token.text().split('\n').count() - 1,
+                    SyntaxKind::TOKEN_COMMENT if token.text().contains(PRAGMA_SKIP) =>
+                        return true,
+                    _ => {}
+                }
+            } else {
+                break;
+            }
+        }
+        false
     }
 }
