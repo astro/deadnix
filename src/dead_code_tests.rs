@@ -266,6 +266,16 @@ alive
 }
 
 #[test]
+fn skip_complete_attrset() {
+    let results = run("
+# deadnix: skip
+{ dead1,  dead2 }:
+alive
+    ");
+    assert_eq!(0, results.len());
+}
+
+#[test]
 fn skip_lambda_arg() {
     let results = run("
 # deadnix: skip
