@@ -288,6 +288,16 @@ alive
 }
 
 #[test]
+fn skip_multiple_lambda_args() {
+    let results = run("
+# deadnix: skip
+dead1: dead2:
+alive
+    ");
+    assert_eq!(0, results.len());
+}
+
+#[test]
 fn shadowed_by_skip() {
     let nix = "
 let
