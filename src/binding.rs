@@ -41,7 +41,7 @@ impl Binding {
         self.mortal
     }
 
-    /// Searches through tokens backwards for PRAGMA_SKIP until at
+    /// Searches through tokens backwards for `PRAGMA_SKIP` until at
     /// least two linebreaks are seen
     pub fn has_pragma_skip(&self) -> bool {
         let mut line_breaks = 0;
