@@ -298,6 +298,19 @@ alive
 }
 
 #[test]
+fn skip_inherit() {
+    let results = run("
+let
+  # deadnix: skip
+  inherit dead1;
+  inherit dead2;
+in alive
+    ");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "dead2");
+}
+
+#[test]
 fn shadowed_by_skip() {
     let nix = "
 let
