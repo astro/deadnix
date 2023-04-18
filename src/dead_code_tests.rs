@@ -266,6 +266,18 @@ alive
 }
 
 #[test]
+fn skip_lambda_arg() {
+    let results = run("
+# deadnix: skip
+dead1:
+dead2:
+alive
+    ");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "dead2");
+}
+
+#[test]
 fn shadowed_by_skip() {
     let nix = "
 let
