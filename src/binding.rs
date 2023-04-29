@@ -17,8 +17,6 @@ const PRAGMA_SKIP: &str = "deadnix: skip";
 #[derive(Debug, Clone)]
 pub struct Binding {
     pub name: Ident,
-    /// syntax node of body depending on declaration
-    pub body_node: SyntaxNode<NixLanguage>,
     /// syntax node of declaration itself
     pub decl_node: SyntaxNode<NixLanguage>,
     mortal: bool,
@@ -27,13 +25,11 @@ pub struct Binding {
 impl Binding {
     pub fn new(
         name: Ident,
-        body_node: SyntaxNode<NixLanguage>,
         decl_node: SyntaxNode<NixLanguage>,
         mortal: bool,
     ) -> Self {
         Binding {
             name,
-            body_node,
             decl_node,
             mortal,
         }

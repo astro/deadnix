@@ -85,11 +85,11 @@ impl Scope {
                 pattern
                     .pat_bind()
                     .and_then(|name| name.ident())
-                    .map(|name| Binding::new(name.clone(), name.syntax().clone(), name.syntax().clone(), true))
+                    .map(|name| Binding::new(name.clone(), name.syntax().clone(), true))
                     .into_iter()
                     .chain(pattern.pat_entries().map(move |entry| {
                         let name = entry.ident().expect("entry.ident");
-                        Binding::new(name, entry.syntax().clone(), entry.syntax().clone(), true)
+                        Binding::new(name, entry.syntax().clone(), true)
                     })),
             ),
 
@@ -98,7 +98,6 @@ impl Scope {
                 Box::new(
                     Some(Binding::new(
                         name.clone(),
-                        name.syntax().clone(),
                         name.syntax().clone(),
                         mortal,
                     ))
@@ -110,11 +109,6 @@ impl Scope {
                 let_in
                     .inherits()
                     .flat_map(|inherit| {
-                        let body_node = if let Some(from) = inherit.from() {
-                            from.syntax().clone()
-                        } else {
-                            inherit.syntax().clone()
-                        };
                         inherit.attrs().filter_map(move |attr|
                             match attr {
                                 Attr::Ident(ident) => Some(ident),
@@ -123,7 +117,6 @@ impl Scope {
                         ).map(move |ident| {
                             Binding::new(
                                 ident.clone(),
-                                body_node.clone(),
                                 ident.syntax().clone(),
                                 true
                             )
@@ -135,7 +128,7 @@ impl Scope {
                         match attrpath.attrs().next() {
                             Some(Attr::Ident(name)) =>
                                 Some(
-                                    Binding::new(name, entry.syntax().clone(), entry.syntax().clone(), true)
+                                    Binding::new(name, entry.syntax().clone(), true)
                                 ),
                             _ => None,
                         }
@@ -150,7 +143,7 @@ impl Scope {
                             match attr {
                                 Attr::Ident(ref name) =>
                                     Some(
-                                        Binding::new(name.clone(), inherit.syntax().clone(), attr.syntax().clone(), false)
+                                        Binding::new(name.clone(), attr.syntax().clone(), false)
                                     ),
                                 _ =>
                                     None,
@@ -166,7 +159,7 @@ impl Scope {
                         match key {
                             Some(Attr::Ident(name)) =>
                                 Some(
-                                    Binding::new(name, entry.syntax().clone(), entry.syntax().clone(), false)
+                                    Binding::new(name, entry.syntax().clone(), false)
                                 ),
                             _ => None,
                         }
