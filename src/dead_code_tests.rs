@@ -92,12 +92,10 @@ fn let_in_inherit_dead_multi() {
 fn let_in_inherit_dead_recursive_multi() {
     let results =
         run("let inherit (grave) dead1; inherit (dead1) dead2; inherit (dead2) dead3; in false");
-    assert_eq!(1, results.len());
-    assert_eq!(results[0].binding.name.to_string(), "dead3");
-    // assert_eq!(3, results.len());
-    // assert_eq!(results[0].binding.name.to_string(), "dead1");
-    // assert_eq!(results[1].binding.name.to_string(), "dead2");
-    // assert_eq!(results[2].binding.name.to_string(), "dead3");
+    assert_eq!(3, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "dead1");
+    assert_eq!(results[1].binding.name.to_string(), "dead2");
+    assert_eq!(results[2].binding.name.to_string(), "dead3");
 }
 
 #[test]
@@ -106,8 +104,8 @@ fn let_in_inherit_shadowed() {
     let results = run(nix);
     assert_eq!(1, results.len());
     assert_eq!(results[0].binding.name.to_string(), "x");
-    // let first_pos = nix.find("x").unwrap();
-    // assert_eq!(usize::from(results[0].binding.name.syntax().text_range().start()), first_pos);
+    let first_pos = nix.find("x").unwrap();
+    assert_eq!(usize::from(results[0].binding.name.syntax().text_range().start()), first_pos);
 }
 
 #[test]
@@ -381,11 +379,9 @@ fn let_inherit_complex() {
      in
      alive
     ");
-    assert_eq!(1, results.len());
-    assert_eq!(results[0].binding.name.to_string(), "dead");
-    // assert_eq!(2, results.len());
-    // assert_eq!(results[0].binding.name.to_string(), "dead");
-    // assert_eq!(results[1].binding.name.to_string(), "src");
+    assert_eq!(2, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "src");
+    assert_eq!(results[1].binding.name.to_string(), "dead");
 }
 
 #[test]

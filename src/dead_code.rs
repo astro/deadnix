@@ -1,7 +1,5 @@
 use crate::{binding::Binding, scope::Scope, usage};
-use rnix::{
-    NixLanguage,
-};
+use rnix::{NixLanguage, SyntaxKind, ast::Inherit};
 use rowan::{api::SyntaxNode, ast::AstNode};
 use std::{
     collections::{HashMap, HashSet},
@@ -62,16 +60,15 @@ impl Settings {
                         continue;
                     }
 
-                    // TODO: combine bindinges and bodies so that
-                    // bodies of dead bindings can be marked as dead
                     if binding.is_mortal()
-                    && ! scope.bodies().any(|body|
-                        // exclude this binding's own node
-                        body != binding.decl_node
+                    && scope.bodies().all(|body|
+                        // remove this binding's own node
+                        body == binding.decl_node
                         // excluding already unused results
-                        && ! dead.contains(&body)
-                        // find if used anywhere
-                        && usage::find(&binding.name, &body)
+                        || dead.contains(&body)
+                        || is_dead_inherit(&dead, &body)
+                        // or not used anywhere
+                        || ! usage::find(&binding.name, &body)
                     )
                     && ! binding.has_pragma_skip() {
                         dead.insert(binding.decl_node.clone());
@@ -91,5 +88,20 @@ impl Settings {
         for child in node.children() {
             self.scan(&child, dead, results);
         }
+    }
+}
+
+/// is node body (InheritFrom) of an inherit clause that contains only dead bindings?
+fn is_dead_inherit(dead: &HashSet<SyntaxNode<NixLanguage>>, node: &SyntaxNode<NixLanguage>) -> bool {
+    if node.kind() != SyntaxKind::NODE_INHERIT_FROM {
+        return false;
+    }
+
+    if let Some(inherit) = node.parent().and_then(|parent|
+        Inherit::cast(parent)
+    ) {
+        inherit.attrs().all(|attr| dead.contains(attr.syntax()))
+    } else {
+        false
     }
 }
