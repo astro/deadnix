@@ -17,7 +17,9 @@ const PRAGMA_SKIP: &str = "deadnix: skip";
 #[derive(Debug, Clone)]
 pub struct Binding {
     pub name: Ident,
+    /// syntax node of body depending on declaration
     pub body_node: SyntaxNode<NixLanguage>,
+    /// syntax node of declaration itself
     pub decl_node: SyntaxNode<NixLanguage>,
     mortal: bool,
 }

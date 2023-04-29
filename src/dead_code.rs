@@ -62,17 +62,19 @@ impl Settings {
                         continue;
                     }
 
+                    // TODO: combine bindinges and bodies so that
+                    // bodies of dead bindings can be marked as dead
                     if binding.is_mortal()
                     && ! scope.bodies().any(|body|
                         // exclude this binding's own node
-                        body != binding.body_node
+                        body != binding.decl_node
                         // excluding already unused results
-                        && dead.get(&body).is_none()
+                        && ! dead.contains(&body)
                         // find if used anywhere
                         && usage::find(&binding.name, &body)
                     )
                     && ! binding.has_pragma_skip() {
-                        dead.insert(binding.body_node.clone());
+                        dead.insert(binding.decl_node.clone());
                         results.insert(
                             binding.decl_node.clone(),
                             DeadCode {
