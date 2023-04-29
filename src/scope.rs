@@ -169,8 +169,6 @@ impl Scope {
     }
 
     /// The code subtrees in which the introduced variables are available
-    ///
-    /// TODO: return `&SyntaxNode`
     pub fn bodies(&self) -> Box<dyn Iterator<Item = SyntaxNode<NixLanguage>>> {
         match self {
             Scope::LambdaPattern(pattern, body) => Box::new(
