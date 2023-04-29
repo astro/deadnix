@@ -66,7 +66,7 @@ impl Settings {
                         body == binding.decl_node
                         // excluding already unused results
                         || dead.contains(&body)
-                        || is_dead_inherit(&dead, &body)
+                        || is_dead_inherit(dead, &body)
                         // or not used anywhere
                         || ! usage::find(&binding.name, &body)
                     )
@@ -91,15 +91,13 @@ impl Settings {
     }
 }
 
-/// is node body (InheritFrom) of an inherit clause that contains only dead bindings?
+/// is node body (`InheritFrom`) of an inherit clause that contains only dead bindings?
 fn is_dead_inherit(dead: &HashSet<SyntaxNode<NixLanguage>>, node: &SyntaxNode<NixLanguage>) -> bool {
     if node.kind() != SyntaxKind::NODE_INHERIT_FROM {
         return false;
     }
 
-    if let Some(inherit) = node.parent().and_then(|parent|
-        Inherit::cast(parent)
-    ) {
+    if let Some(inherit) = node.parent().and_then(Inherit::cast) {
         inherit.attrs().all(|attr| dead.contains(attr.syntax()))
     } else {
         false

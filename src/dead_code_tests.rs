@@ -104,7 +104,7 @@ fn let_in_inherit_shadowed() {
     let results = run(nix);
     assert_eq!(1, results.len());
     assert_eq!(results[0].binding.name.to_string(), "x");
-    let first_pos = nix.find("x").unwrap();
+    let first_pos = nix.find('x').unwrap();
     assert_eq!(usize::from(results[0].binding.name.syntax().text_range().start()), first_pos);
 }
 
