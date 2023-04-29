@@ -1,3 +1,5 @@
+//! Dead code reporting in human-readable and JSON formats
+
 use crate::dead_code::DeadCode;
 use ariadne::{sources, Config, Label, Report, ReportKind};
 use rnix::TextSize;
@@ -7,7 +9,9 @@ use std::env;
 #[cfg(feature = "json-out")]
 use serde_json::json;
 
-// assumes results to be sorted by occurrence in file
+/// Build a report and print it to stdout
+///
+/// assumes results to be sorted by occurrence in file
 pub fn print(file: String, content: &str, results: &[DeadCode]) {
     let no_color = env::var("NO_COLOR").is_ok();
 
@@ -60,6 +64,7 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
         .unwrap();
 }
 
+/// Print dead code to stdout in JSON
 #[cfg(feature = "json-out")]
 pub fn print_json(file: &str, content: &str, results: &[DeadCode]) {
     let mut offset = 0;

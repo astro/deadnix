@@ -10,9 +10,13 @@ use std::fmt;
 /// AST subtree that declares variables
 #[derive(Debug, Clone)]
 pub enum Scope {
+    /// `{ ... }: ...`
     LambdaPattern(Pattern, SyntaxNode<NixLanguage>),
+    /// `...: ...`
     LambdaArg(Ident, SyntaxNode<NixLanguage>),
+    /// `let ... in ...`
     LetIn(LetIn),
+    /// `rec { ... }`
     RecAttrSet(AttrSet),
 }
 
@@ -64,10 +68,14 @@ impl Scope {
         }
     }
 
+    /// Is this a `...: ...` which can be ignored in
+    /// [`Settings`](`crate::Settings::no_lambda_arg`)
     pub fn is_lambda_arg(&self) -> bool {
         matches!(self, Scope::LambdaArg(_, _))
     }
 
+    /// Is this a `{ ... }: ...` which can be ignored in
+    /// [`Settings`](`crate::Settings::no_lambda_pattern_names`)
     pub fn is_lambda_pattern_name(&self, name: &Ident) -> bool {
         if let Scope::LambdaPattern(pattern, _) = self {
             pattern
@@ -78,7 +86,7 @@ impl Scope {
         }
     }
 
-    /// The Bindings this Scope introduces
+    /// The set of [`Binding`]s this [`Scope`] introduces
     pub fn bindings(&self) -> Box<dyn Iterator<Item = Binding>> {
         match self {
             Scope::LambdaPattern(pattern, _) => Box::new(
@@ -226,6 +234,7 @@ impl Scope {
         }
     }
 
+    /// Output color for dead code warnings
     pub fn color(&self) -> Color {
         match self {
             Scope::LambdaPattern(_, _) => Color::Magenta,

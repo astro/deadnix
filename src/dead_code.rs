@@ -6,9 +6,14 @@ use std::{
     fmt,
 };
 
+/// Instance of a dead binding
+///
+/// Generate them with [`Settings::find_dead_code()`].
 #[derive(Debug, Clone)]
 pub struct DeadCode {
+    /// The [`Scope`] that introduced the [`binding`](`DeadCode::binding`)
     pub scope: Scope,
+    /// The [`Binding`] that is found to be unused
     pub binding: Binding,
 }
 
@@ -18,19 +23,25 @@ impl fmt::Display for DeadCode {
     }
 }
 
+/// Analysis settings
 #[derive(Debug, Clone)]
 pub struct Settings {
+    /// Ignore `...: ...`
     pub no_lambda_arg: bool,
+    /// Ignore `{ ... }: ...`
     pub no_lambda_pattern_names: bool,
+    /// Ignore all `Binding` that start with `_`
     pub no_underscore: bool,
 }
 
 impl Settings {
+    /// Find unused bindings
+    ///
+    /// Loops until no more new [`Binding`] is found that is used only
+    /// by [`DeadCode`] that was found in a previous iteration.
     pub fn find_dead_code(&self, node: &SyntaxNode<NixLanguage>) -> Vec<DeadCode> {
         let mut dead = HashSet::new();
         let mut results = HashMap::new();
-        // loop so that bodies are ignored that were detected as dead in a
-        // previous iteration
         let mut prev_results_len = 1;
         while prev_results_len != results.len() {
             prev_results_len = results.len();
@@ -42,7 +53,7 @@ impl Settings {
         results
     }
 
-    /// recursively scan the AST, accumulating results
+    /// Recursively scan the AST, accumulating results
     fn scan(
         &self,
         node: &SyntaxNode<NixLanguage>,

@@ -14,15 +14,18 @@ use rowan::{api::SyntaxNode, ast::AstNode};
 /// ```
 const PRAGMA_SKIP: &str = "deadnix: skip";
 
+/// A Nix variable binding
 #[derive(Debug, Clone)]
 pub struct Binding {
+    /// Variable name
     pub name: Ident,
-    /// syntax node of declaration itself
+    /// Syntax node of declaration itself
     pub decl_node: SyntaxNode<NixLanguage>,
     mortal: bool,
 }
 
 impl Binding {
+    /// Create a new Binding
     pub fn new(
         name: Ident,
         decl_node: SyntaxNode<NixLanguage>,
@@ -35,10 +38,16 @@ impl Binding {
         }
     }
 
+    /// Can die?
+    ///
+    /// Not mortal are `rec { ... }`, and lambda args that already
+    /// start with `_`.
     pub fn is_mortal(&self) -> bool {
         self.mortal
     }
 
+    /// Does the name start with `_`, signifying an anonymous
+    /// variable?
     pub fn starts_with_underscore(&self) -> bool {
         self.name.syntax().text().char_at(0.into()) == Some('_')
     }
