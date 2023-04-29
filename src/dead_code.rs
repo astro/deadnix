@@ -55,7 +55,7 @@ impl Settings {
         if let Some(scope) = Scope::new(node) {
             if !(self.no_lambda_arg && scope.is_lambda_arg()) {
                 for binding in scope.bindings() {
-                    if self.no_underscore && binding.name.syntax().text().char_at(0.into()) == Some('_') {
+                    if self.no_underscore && binding.starts_with_underscore() {
                         continue;
                     }
                     if self.no_lambda_pattern_names && scope.is_lambda_pattern_name(&binding.name) {

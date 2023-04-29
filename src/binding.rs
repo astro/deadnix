@@ -2,7 +2,7 @@ use rnix::{
     ast::Ident,
     NixLanguage, SyntaxKind,
 };
-use rowan::api::SyntaxNode;
+use rowan::{api::SyntaxNode, ast::AstNode};
 
 /// This string in a Nix comment above an unused declaration shall
 /// force us to skip it.
@@ -37,6 +37,10 @@ impl Binding {
 
     pub fn is_mortal(&self) -> bool {
         self.mortal
+    }
+
+    pub fn starts_with_underscore(&self) -> bool {
+        self.name.syntax().text().char_at(0.into()) == Some('_')
     }
 
     /// Searches through tokens backwards for `PRAGMA_SKIP` until at
