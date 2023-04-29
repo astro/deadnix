@@ -29,7 +29,9 @@
                 -A clippy::too-many-lines \
                 -A clippy::cast-possible-wrap \
                 -A clippy::cast-possible-truncation \
-                -A clippy::nonminimal_bool || true''
+                -A clippy::nonminimal_bool \
+                -A clippy::must-use-candidate \
+                -A clippy::missing-panics-doc || true''
             ];
           meta.description = "Scan Nix files for dead code";
         };
