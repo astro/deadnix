@@ -52,7 +52,7 @@
           };
 
           devShells.default = with pkgs; mkShell {
-            nativeBuildInputs = [ cargo rustc rustfmt rustPackages.clippy rust-analyzer ];
+            nativeBuildInputs = [ cargo rustc rustfmt rustPackages.clippy rust-analyzer libiconv ];
             RUST_SRC_PATH = rustPlatform.rustLibSrc;
           };
         })
