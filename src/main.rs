@@ -1,7 +1,7 @@
 use clap::{Arg, ArgAction, Command};
 #[cfg(feature = "json-out")]
 use serde_json::json;
-use std::{fs, collections::HashSet};
+use std::{fs, collections::HashSet, path::Path};
 
 mod binding;
 mod dead_code;
@@ -122,7 +122,13 @@ fn main() {
     };
     let is_included: Box<dyn Fn(&String) -> bool> = if let Some(excludes) = matches.get_many("EXCLUDES") {
         let excludes = excludes.cloned().collect::<HashSet<String>>();
-        Box::new(move |s| ! excludes.contains(s))
+        Box::new(move |s| {
+            let s = Path::new(s).canonicalize().unwrap();
+            !excludes.iter().any(|exclude| {
+                let exclude = Path::new(exclude).canonicalize().unwrap();
+                s.starts_with(&exclude)
+            })
+        })
     } else {
         Box::new(|_| true)
     };
