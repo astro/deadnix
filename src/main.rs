@@ -120,12 +120,13 @@ fn main() {
             entry.file_name().to_str()
                  .map_or(false, |s| s == "." || s == ".." || ! s.starts_with('.'))
     };
-    let is_included: Box<dyn Fn(&String) -> bool> = if let Some(excludes) = matches.get_many("EXCLUDES") {
-        let excludes = excludes.cloned().collect::<HashSet<String>>();
+    let is_included: Box<dyn Fn(&String) -> bool> = if let Some(excludes) = matches.get_many::<String>("EXCLUDES") {
+        let excludes = excludes.filter_map(|exclude|
+            Path::new(exclude).canonicalize().ok()
+        ).collect::<HashSet<_>>();
         Box::new(move |s| {
             let s = Path::new(s).canonicalize().unwrap();
-            !excludes.iter().any(|exclude| {
-                let exclude = Path::new(exclude).canonicalize().unwrap();
+            ! excludes.iter().any(|exclude| {
                 s.starts_with(&exclude)
             })
         })
