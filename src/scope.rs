@@ -183,7 +183,7 @@ impl Scope {
                 pattern
                     .pat_entries()
                     .map(|entry| entry.syntax().clone())
-                    .chain(Some(body.clone()).into_iter()),
+                    .chain(Some(body.clone())),
             ),
 
             Scope::LambdaArg(_, body) => Box::new(Some(body.clone()).into_iter()),

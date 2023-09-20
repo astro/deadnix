@@ -127,7 +127,7 @@ fn main() {
         Box::new(move |s| {
             let s = Path::new(s).canonicalize().unwrap();
             ! excludes.iter().any(|exclude| {
-                s.starts_with(&exclude)
+                s.starts_with(exclude)
             })
         })
     } else {
