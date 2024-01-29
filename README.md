@@ -12,7 +12,7 @@ See [deadnix-action](https://github.com/astro/deadnix-action)
 ### Help
 
 ```console
-$ nix run github:astro/deadnix -- --help
+nix run github:astro/deadnix -- --help
 Find dead code in .nix files
 
 Usage: deadnix [OPTIONS] [FILE_PATHS]...
@@ -43,7 +43,7 @@ The `--exclude` parameter accepts multiple paths. Separate them with
 ### Scan for unused code
 
 ```console
-$ nix run github:astro/deadnix example.nix
+nix run github:astro/deadnix example.nix
 Warning: Unused declarations were found.
     ╭─[example.nix:1:1]
   1 │unusedArgs@{ unusedArg, usedArg, ... }:
@@ -68,7 +68,7 @@ Warning: Unused declarations were found.
 **Do commit** your changes into version control **before!**
 
 ```console
-$ nix run github:astro/deadnix -- -eq test.nix
+nix run github:astro/deadnix -- -eq test.nix
 ```
 
 ## Usage with [pre-commit](https://pre-commit.com/)
