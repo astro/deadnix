@@ -51,8 +51,8 @@
           };
         })
     // {
-      overlays.default = (_: prev: {
-        deadnix = deadnixLambda prev;
+      overlays.default = (final: _: {
+        deadnix = deadnixLambda final;
       });
     };
 }
