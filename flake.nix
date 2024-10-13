@@ -11,7 +11,7 @@
         pkgs.rustPlatform.buildRustPackage {
           pname = "deadnix";
           version = self.sourceInfo.lastModifiedDate;
-          src = ./.;
+          src = self;
           cargoLock.lockFile = ./Cargo.lock;
           nativeCheckInputs = [ pkgs.clippy ];
           doCheck = true;
