@@ -43,7 +43,9 @@ fn main() {
                 .action(ArgAction::SetTrue)
                 .short('_')
                 .long("no-underscore")
-                .help("Don't check any bindings that start with a _"),
+                .help("Don't check any bindings that start with a _\n\
+                       (Lambda arguments starting with _ are not checked anyway.)"
+                ),
         )
         .arg(
             Arg::new("QUIET")
