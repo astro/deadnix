@@ -410,3 +410,54 @@ fn let_nested_attrset() {
     // No evaluation
     assert_eq!(0, results.len());
 }
+
+#[test]
+fn let_attrset_splice() {
+    let results = run("
+     let
+       alive = \"foo\";
+       attrset.${alive} = 23;
+     in attrset
+    ");
+    assert_eq!(0, results.len());
+}
+
+#[test]
+fn let_shadowed_by_attrset() {
+    let results = run("
+     let
+       dead = 42;
+     in {
+       dead = 23;
+     }
+    ");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "dead");
+}
+
+#[test]
+fn let_in_attrset_splice() {
+    let results = run("
+     let
+       alive = \"foo\";
+     in {
+       ${alive} = 5;
+     }
+    ");
+    assert_eq!(0, results.len());
+}
+
+#[test]
+fn let_partially_shadowed_by_attrset() {
+    let results = run("
+     let
+       dead = 42;
+       alive = \"foo\";
+     in {
+       dead = 42;
+       dead.${alive}.dead = 5;
+     }
+    ");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "dead");
+}
