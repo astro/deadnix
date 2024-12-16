@@ -19,16 +19,21 @@ pub fn find(name: &Ident, node: &SyntaxNode<NixLanguage>) -> bool {
                 return false;
             }
         }
-    }
 
-    let ident = if node.kind() == SyntaxKind::NODE_IDENT {
-        Ident::cast(node.clone())
-    } else {
-        None
-    };
-    if let Some(ident) = &ident {
+        scope.bodies().any(|node| find(name, &node))
+    } else if node.kind() == SyntaxKind::NODE_IDENT {
+        // Ident node: occurrence?
+        let ident = Ident::cast(node.clone()).unwrap();
         ident.syntax().text() == name.syntax().text()
+    } else if node.kind() == SyntaxKind::NODE_ATTRPATH {
+        // Don't search for idents in keys, they introduce new scopes
+        // anyway. Except for `${...}`
+        node.children().any(|node|
+            node.kind() == SyntaxKind::NODE_DYNAMIC &&
+            find(name, &node)
+        )
     } else {
+        // Just search every child in the AST
         node.children().any(|node| find(name, &node))
     }
 }
