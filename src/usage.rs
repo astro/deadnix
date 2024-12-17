@@ -27,9 +27,13 @@ pub fn find(name: &Ident, node: &SyntaxNode<NixLanguage>) -> bool {
         ident.syntax().text() == name.syntax().text()
     } else if node.kind() == SyntaxKind::NODE_ATTRPATH {
         // Don't search for idents in keys, they introduce new scopes
-        // anyway. Except for `${...}`
+        // anyway. Except for `${...}` and `"..."` which do not
+        // introduce new scopes in attrsets that are not declared
+        // `rec`.
         node.children().any(|node|
-            node.kind() == SyntaxKind::NODE_DYNAMIC &&
+            (node.kind() == SyntaxKind::NODE_DYNAMIC ||
+             node.kind() == SyntaxKind::NODE_STRING
+            ) &&
             find(name, &node)
         )
     } else {

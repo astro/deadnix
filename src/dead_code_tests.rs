@@ -461,3 +461,24 @@ fn let_partially_shadowed_by_attrset() {
     assert_eq!(1, results.len());
     assert_eq!(results[0].binding.name.to_string(), "dead");
 }
+
+#[test]
+fn let_args_splice() {
+    let results = run("
+      { config, ... }:
+
+      \"${config.bar}\"
+    ");
+    assert_eq!(0, results.len());
+}
+
+#[test]
+fn let_args_string_splice() {
+    let results = run("
+      { config, ... }: {
+
+        \"${config.bar}\" = 42;
+      }
+    ");
+    assert_eq!(0, results.len());
+}
