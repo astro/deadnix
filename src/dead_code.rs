@@ -15,11 +15,17 @@ pub struct DeadCode {
     pub scope: Scope,
     /// The [`Binding`] that is found to be unused
     pub binding: Binding,
+    /// Used or unused?
+    unused: bool,
 }
 
 impl fmt::Display for DeadCode {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "Unused {}: {}", self.scope, self.binding.name)
+        if self.unused {
+            write!(fmt, "Unused {}: {}", self.scope, self.binding.name)
+        } else {
+            write!(fmt, "Used {}: {}", self.scope, self.binding.name)
+        }
     }
 }
 
@@ -32,6 +38,8 @@ pub struct Settings {
     pub no_lambda_pattern_names: bool,
     /// Ignore all `Binding` that start with `_`
     pub no_underscore: bool,
+    /// Warn on used binding that starts with `_`
+    pub warn_used_underscore: bool,
 }
 
 impl Settings {
@@ -71,25 +79,31 @@ impl Settings {
                         continue;
                     }
 
-                    if binding.is_mortal()
-                    && scope.bodies().all(|body|
-                        // remove this binding's own node
-                        body == binding.decl_node
-                        // excluding already unused results
-                        || dead.contains(&body)
-                        || is_dead_inherit(dead, &body)
-                        // or not used anywhere
-                        || ! usage::find(&binding.name, &body)
-                    )
-                    && ! binding.has_pragma_skip() {
-                        dead.insert(binding.decl_node.clone());
-                        results.insert(
-                            binding.decl_node.clone(),
-                            DeadCode {
-                                scope: scope.clone(),
-                                binding,
-                            },
+                    if binding.is_mortal() && ! binding.has_pragma_skip() {
+                        let unused = scope.bodies().all(|body|
+                            // remove this binding's own node
+                            body == binding.decl_node
+                            // excluding already unused results
+                            || dead.contains(&body)
+                            || is_dead_inherit(dead, &body)
+                            // or not used anywhere
+                            || ! usage::find(&binding.name, &body)
                         );
+                        if unused || (
+                            self.warn_used_underscore &&
+                            binding.name.syntax().text().char_at(0.into()) == Some('_') &&
+                            ! unused
+                        ) {
+                            dead.insert(binding.decl_node.clone());
+                            results.insert(
+                                binding.decl_node.clone(),
+                                DeadCode {
+                                    scope: scope.clone(),
+                                    binding,
+                                    unused,
+                                },
+                            );
+                        }
                     }
                 }
             }

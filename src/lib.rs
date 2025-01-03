@@ -14,6 +14,7 @@
 //!     no_lambda_arg: false,
 //!     no_lambda_pattern_names: false,
 //!     no_underscore: false,
+//!     warn_used_underscore: false,
 //! }.find_dead_code(&ast.syntax());
 //!
 //! for dead_code in &results {

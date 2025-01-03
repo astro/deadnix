@@ -10,6 +10,7 @@ fn run(content: &str) -> (String, bool) {
         no_lambda_arg: false,
         no_lambda_pattern_names: false,
         no_underscore: false,
+        warn_used_underscore: false,
     }
     .find_dead_code(&ast.syntax());
     crate::edit::edit_dead_code(content, results.into_iter())

@@ -48,6 +48,13 @@ fn main() {
                 ),
         )
         .arg(
+            Arg::new("WARN_USED_UNDERSCORE")
+                .action(ArgAction::SetTrue)
+                .short('W')
+                .long("warn-used-underscore")
+                .help("Warn if bindings are referenced that start with '_'"),
+        )
+        .arg(
             Arg::new("QUIET")
                 .action(ArgAction::SetTrue)
                 .short('q')
@@ -112,6 +119,7 @@ fn main() {
         no_lambda_arg: matches.get_flag("NO_LAMBDA_ARG"),
         no_lambda_pattern_names: matches.get_flag("NO_LAMBDA_PATTERN_NAMES"),
         no_underscore: matches.get_flag("NO_UNDERSCORE"),
+        warn_used_underscore: matches.get_flag("WARN_USED_UNDERSCORE"),
     };
     let quiet = matches.get_flag("QUIET");
     let edit = matches.get_flag("EDIT");

@@ -3,16 +3,20 @@
 use rowan::ast::AstNode;
 use crate::dead_code::{DeadCode, Settings};
 
-fn run(content: &str) -> Vec<DeadCode> {
+fn run_settings(content: &str, settings: Settings) -> Vec<DeadCode> {
     let ast = rnix::Root::parse(content);
     assert_eq!(0, ast.errors().len());
 
-    Settings {
+    settings.find_dead_code(&ast.syntax())
+}
+
+fn run(content: &str) -> Vec<DeadCode> {
+    run_settings(content, Settings {
         no_lambda_arg: false,
         no_lambda_pattern_names: false,
         no_underscore: false,
-    }
-    .find_dead_code(&ast.syntax())
+        warn_used_underscore: false,
+    })
 }
 
 #[test]
@@ -481,4 +485,18 @@ fn let_args_string_splice() {
       }
     ");
     assert_eq!(0, results.len());
+}
+
+#[test]
+fn used_underscore_let() {
+    let results = run_settings("
+      let _x = 23;
+      in _x
+    ", Settings {
+        no_lambda_arg: false,
+        no_lambda_pattern_names: false,
+        no_underscore: false,
+        warn_used_underscore: true,
+    });
+    assert_eq!(1, results.len());
 }
