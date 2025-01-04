@@ -31,6 +31,7 @@ impl fmt::Display for DeadCode {
 
 /// Analysis settings
 #[derive(Debug, Clone)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Settings {
     /// Ignore `...: ...`
     pub no_lambda_arg: bool,
