@@ -34,12 +34,16 @@
       (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-        in
-        {
+
           packages = {
             default = self.packages."${system}".deadnix;
             deadnix = deadnixLambda pkgs;
           };
+        in
+        {
+          inherit packages;
+
+          checks = packages;
 
           apps.default = utils.lib.mkApp {
             drv = self.packages."${system}".default;
