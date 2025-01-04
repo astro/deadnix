@@ -3,7 +3,7 @@
 use rowan::ast::AstNode;
 use crate::dead_code::{DeadCode, Settings};
 
-fn run_settings(content: &str, settings: Settings) -> Vec<DeadCode> {
+fn run_settings(content: &str, settings: &Settings) -> Vec<DeadCode> {
     let ast = rnix::Root::parse(content);
     assert_eq!(0, ast.errors().len());
 
@@ -11,7 +11,7 @@ fn run_settings(content: &str, settings: Settings) -> Vec<DeadCode> {
 }
 
 fn run(content: &str) -> Vec<DeadCode> {
-    run_settings(content, Settings {
+    run_settings(content, &Settings {
         no_lambda_arg: false,
         no_lambda_pattern_names: false,
         no_underscore: false,
@@ -492,7 +492,7 @@ fn used_underscore_let() {
     let results = run_settings("
       let _x = 23;
       in _x
-    ", Settings {
+    ", &Settings {
         no_lambda_arg: false,
         no_lambda_pattern_names: false,
         no_underscore: false,
