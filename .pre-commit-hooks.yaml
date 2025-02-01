@@ -4,4 +4,4 @@
   entry: deadnix
   args: [--fail]
   types: [nix]
-  language: system
+  language: rust
