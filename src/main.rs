@@ -127,8 +127,7 @@ fn main() {
         |_: &walkdir::DirEntry| true
     } else {
         |entry: &walkdir::DirEntry|
-            entry.file_name().to_str()
-                 .map_or(false, |s| s == "." || s == ".." || ! s.starts_with('.'))
+            entry.file_name().to_str().is_some_and(|s| s == "." || s == ".." || ! s.starts_with('.'))
     };
     let is_included: Box<dyn Fn(&String) -> bool> = if let Some(excludes) = matches.get_many::<String>("EXCLUDES") {
         let excludes = excludes.filter_map(|exclude|
@@ -173,8 +172,7 @@ fn main() {
                         entry.file_type().is_file()
                             && entry
                                 .path()
-                                .extension()
-                                .map_or(false, |ext| ext.eq_ignore_ascii_case("nix"))
+                                .extension().is_some_and(|ext| ext.eq_ignore_ascii_case("nix"))
                     })
                     .map(|entry| entry.path().display().to_string())
                     .filter(&is_included)
