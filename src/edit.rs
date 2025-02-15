@@ -63,8 +63,7 @@ fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
     match dead_code.scope {
         Scope::LambdaPattern(pattern, _) => {
             if pattern
-                .pat_bind()
-                .map_or(false, |at| at.ident().expect("at.ident").syntax() == &dead_code.binding.decl_node)
+                .pat_bind().is_some_and(|at| at.ident().expect("at.ident").syntax() == &dead_code.binding.decl_node)
             {
                 if let Some(pattern_bind_node) = pattern
                     .syntax()
