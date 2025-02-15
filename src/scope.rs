@@ -1,7 +1,7 @@
 use crate::{binding::Binding, usage};
 use ariadne::Color;
 use rnix::{
-    ast::{AttrSet, Ident, Lambda, LetIn, Pattern, Param, HasEntry, Attr},
+    ast::{Attr, AttrSet, HasEntry, Ident, Lambda, LetIn, Param, Pattern},
     NixLanguage, SyntaxKind,
 };
 use rowan::{api::SyntaxNode, ast::AstNode};
@@ -44,9 +44,7 @@ impl Scope {
                         let name = ident_param.ident().expect("IdentParam.ident()");
                         Some(Scope::LambdaArg(name, body))
                     }
-                    Param::Pattern(pattern) => {
-                        Some(Scope::LambdaPattern(pattern, body))
-                    }
+                    Param::Pattern(pattern) => Some(Scope::LambdaPattern(pattern, body)),
                 }
             }
 
@@ -78,9 +76,9 @@ impl Scope {
     /// [`Settings`](`crate::Settings::no_lambda_pattern_names`)
     pub fn is_lambda_pattern_name(&self, name: &Ident) -> bool {
         if let Scope::LambdaPattern(pattern, _) = self {
-            pattern
-                .pat_entries()
-                .any(|entry| entry.ident().expect("entry.ident").syntax().text() == name.syntax().text())
+            pattern.pat_entries().any(|entry| {
+                entry.ident().expect("entry.ident").syntax().text() == name.syntax().text()
+            })
         } else {
             false
         }
@@ -104,12 +102,7 @@ impl Scope {
             Scope::LambdaArg(name, _) => {
                 let mortal = name.syntax().text().char_at(0.into()) != Some('_');
                 Box::new(
-                    Some(Binding::new(
-                        name.clone(),
-                        name.syntax().clone(),
-                        mortal,
-                    ))
-                    .into_iter(),
+                    Some(Binding::new(name.clone(), name.syntax().clone(), mortal)).into_iter(),
                 )
             }
 
@@ -117,27 +110,22 @@ impl Scope {
                 let_in
                     .inherits()
                     .flat_map(|inherit| {
-                        inherit.attrs().filter_map(move |attr|
-                            match attr {
+                        inherit
+                            .attrs()
+                            .filter_map(move |attr| match attr {
                                 Attr::Ident(ident) => Some(ident),
                                 _ => None,
-                            }
-                        ).map(move |ident| {
-                            Binding::new(
-                                ident.clone(),
-                                ident.syntax().clone(),
-                                true
-                            )
-                        })
+                            })
+                            .map(move |ident| {
+                                Binding::new(ident.clone(), ident.syntax().clone(), true)
+                            })
                     })
                     .chain(let_in.attrpath_values().filter_map(|entry| {
-                        let attrpath = entry.attrpath()
-                            .expect("entry.attrpath");
+                        let attrpath = entry.attrpath().expect("entry.attrpath");
                         match attrpath.attrs().next() {
-                            Some(Attr::Ident(name)) =>
-                                Some(
-                                    Binding::new(name, entry.syntax().clone(), true)
-                                ),
+                            Some(Attr::Ident(name)) => {
+                                Some(Binding::new(name, entry.syntax().clone(), true))
+                            }
                             _ => None,
                         }
                     })),
@@ -147,28 +135,19 @@ impl Scope {
                 attr_set
                     .inherits()
                     .flat_map(|inherit| {
-                        inherit.attrs().filter_map(move |attr| {
-                            match attr {
-                                Attr::Ident(ref name) =>
-                                    Some(
-                                        Binding::new(name.clone(), attr.syntax().clone(), false)
-                                    ),
-                                _ =>
-                                    None,
+                        inherit.attrs().filter_map(move |attr| match attr {
+                            Attr::Ident(ref name) => {
+                                Some(Binding::new(name.clone(), attr.syntax().clone(), false))
                             }
+                            _ => None,
                         })
                     })
                     .chain(attr_set.attrpath_values().filter_map(|entry| {
-                        let key = entry
-                            .attrpath()
-                            .expect("entry.attrpath")
-                            .attrs()
-                            .next();
+                        let key = entry.attrpath().expect("entry.attrpath").attrs().next();
                         match key {
-                            Some(Attr::Ident(name)) =>
-                                Some(
-                                    Binding::new(name, entry.syntax().clone(), false)
-                                ),
+                            Some(Attr::Ident(name)) => {
+                                Some(Binding::new(name, entry.syntax().clone(), false))
+                            }
                             _ => None,
                         }
                     })),
@@ -192,19 +171,19 @@ impl Scope {
                 let_in
                     .inherits()
                     .filter_map(|inherit| inherit.from().map(|from| from.syntax().clone()))
-                    .chain(
-                        let_in.attrpath_values().map(|entry| entry.syntax().clone())
-                    )
-                    .chain(
-                        let_in.body().map(|body| body.syntax().clone())
-                    ),
+                    .chain(let_in.attrpath_values().map(|entry| entry.syntax().clone()))
+                    .chain(let_in.body().map(|body| body.syntax().clone())),
             ),
 
             Scope::RecAttrSet(attr_set) => Box::new(
                 attr_set
                     .inherits()
                     .map(|inherit| inherit.syntax().clone())
-                    .chain(attr_set.attrpath_values().map(|entry| entry.syntax().clone())),
+                    .chain(
+                        attr_set
+                            .attrpath_values()
+                            .map(|entry| entry.syntax().clone()),
+                    ),
             ),
         }
     }
