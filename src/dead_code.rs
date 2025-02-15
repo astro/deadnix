@@ -1,5 +1,5 @@
 use crate::{binding::Binding, scope::Scope, usage};
-use rnix::{NixLanguage, SyntaxKind, ast::Inherit};
+use rnix::{ast::Inherit, NixLanguage, SyntaxKind};
 use rowan::{api::SyntaxNode, ast::AstNode};
 use std::{
     collections::{HashMap, HashSet},
@@ -80,7 +80,7 @@ impl Settings {
                         continue;
                     }
 
-                    if binding.is_mortal() && ! binding.has_pragma_skip() {
+                    if binding.is_mortal() && !binding.has_pragma_skip() {
                         let unused = scope.bodies().all(|body|
                             // remove this binding's own node
                             body == binding.decl_node
@@ -88,13 +88,12 @@ impl Settings {
                             || dead.contains(&body)
                             || is_dead_inherit(dead, &body)
                             // or not used anywhere
-                            || ! usage::find(&binding.name, &body)
-                        );
-                        if unused || (
-                            self.warn_used_underscore &&
-                            binding.name.syntax().text().char_at(0.into()) == Some('_') &&
-                            ! unused
-                        ) {
+                            || ! usage::find(&binding.name, &body));
+                        if unused
+                            || (self.warn_used_underscore
+                                && binding.name.syntax().text().char_at(0.into()) == Some('_')
+                                && !unused)
+                        {
                             dead.insert(binding.decl_node.clone());
                             results.insert(
                                 binding.decl_node.clone(),
@@ -118,7 +117,10 @@ impl Settings {
 }
 
 /// is node body (`InheritFrom`) of an inherit clause that contains only dead bindings?
-fn is_dead_inherit(dead: &HashSet<SyntaxNode<NixLanguage>>, node: &SyntaxNode<NixLanguage>) -> bool {
+fn is_dead_inherit(
+    dead: &HashSet<SyntaxNode<NixLanguage>>,
+    node: &SyntaxNode<NixLanguage>,
+) -> bool {
     if node.kind() != SyntaxKind::NODE_INHERIT_FROM {
         return false;
     }

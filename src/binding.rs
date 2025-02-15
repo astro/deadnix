@@ -1,7 +1,4 @@
-use rnix::{
-    ast::Ident,
-    NixLanguage, SyntaxKind,
-};
+use rnix::{ast::Ident, NixLanguage, SyntaxKind};
 use rowan::{api::SyntaxNode, ast::AstNode};
 
 /// This string in a Nix comment above an unused declaration shall
@@ -26,11 +23,7 @@ pub struct Binding {
 
 impl Binding {
     /// Create a new Binding
-    pub fn new(
-        name: Ident,
-        decl_node: SyntaxNode<NixLanguage>,
-        mortal: bool,
-    ) -> Self {
+    pub fn new(name: Ident, decl_node: SyntaxNode<NixLanguage>, mortal: bool) -> Self {
         Binding {
             name,
             decl_node,
@@ -68,8 +61,7 @@ impl Binding {
                     }
                 }
 
-                SyntaxKind::TOKEN_COMMENT if token.text().contains(PRAGMA_SKIP) =>
-                    return true,
+                SyntaxKind::TOKEN_COMMENT if token.text().contains(PRAGMA_SKIP) => return true,
 
                 _ => {}
             }

@@ -22,7 +22,6 @@
 //! }
 //! ```
 
-
 #![deny(unsafe_code, missing_docs, bare_trait_objects)]
 
 mod binding;
@@ -35,6 +34,6 @@ mod scope;
 mod usage;
 
 pub use binding::Binding;
-pub use scope::Scope;
 pub use dead_code::{DeadCode, Settings};
 pub use edit::edit_dead_code;
+pub use scope::Scope;

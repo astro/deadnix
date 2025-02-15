@@ -1,7 +1,7 @@
 use clap::{Arg, ArgAction, Command};
 #[cfg(feature = "json-out")]
 use serde_json::json;
-use std::{fs, collections::HashSet, path::Path};
+use std::{collections::HashSet, fs, path::Path};
 
 mod binding;
 mod dead_code;
@@ -43,8 +43,9 @@ fn main() {
                 .action(ArgAction::SetTrue)
                 .short('_')
                 .long("no-underscore")
-                .help("Don't check any bindings that start with a _\n\
-                       (Lambda arguments starting with _ are not checked anyway.)"
+                .help(
+                    "Don't check any bindings that start with a _\n\
+                       (Lambda arguments starting with _ are not checked anyway.)",
                 ),
         )
         .arg(
@@ -126,22 +127,25 @@ fn main() {
     let is_visible = if matches.get_flag("HIDDEN") {
         |_: &walkdir::DirEntry| true
     } else {
-        |entry: &walkdir::DirEntry|
-            entry.file_name().to_str().is_some_and(|s| s == "." || s == ".." || ! s.starts_with('.'))
+        |entry: &walkdir::DirEntry| {
+            entry
+                .file_name()
+                .to_str()
+                .is_some_and(|s| s == "." || s == ".." || !s.starts_with('.'))
+        }
     };
-    let is_included: Box<dyn Fn(&String) -> bool> = if let Some(excludes) = matches.get_many::<String>("EXCLUDES") {
-        let excludes = excludes.filter_map(|exclude|
-            Path::new(exclude).canonicalize().ok()
-        ).collect::<HashSet<_>>();
-        Box::new(move |s| {
-            let s = Path::new(s).canonicalize().unwrap();
-            ! excludes.iter().any(|exclude| {
-                s.starts_with(exclude)
+    let is_included: Box<dyn Fn(&String) -> bool> =
+        if let Some(excludes) = matches.get_many::<String>("EXCLUDES") {
+            let excludes = excludes
+                .filter_map(|exclude| Path::new(exclude).canonicalize().ok())
+                .collect::<HashSet<_>>();
+            Box::new(move |s| {
+                let s = Path::new(s).canonicalize().unwrap();
+                !excludes.iter().any(|exclude| s.starts_with(exclude))
             })
-        })
-    } else {
-        Box::new(|_| true)
-    };
+        } else {
+            Box::new(|_| true)
+        };
     let output_format = matches
         .get_one::<String>("OUTPUT_FORMAT")
         .map(String::as_str);
@@ -172,10 +176,11 @@ fn main() {
                         entry.file_type().is_file()
                             && entry
                                 .path()
-                                .extension().is_some_and(|ext| ext.eq_ignore_ascii_case("nix"))
+                                .extension()
+                                .is_some_and(|ext| ext.eq_ignore_ascii_case("nix"))
                     })
                     .map(|entry| entry.path().display().to_string())
-                    .filter(&is_included)
+                    .filter(&is_included),
             ),
 
             // single file

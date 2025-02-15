@@ -1,8 +1,5 @@
 use crate::scope::Scope;
-use rnix::{
-    ast::Ident,
-    NixLanguage, SyntaxKind,
-};
+use rnix::{ast::Ident, NixLanguage, SyntaxKind};
 use rowan::{api::SyntaxNode, ast::AstNode};
 
 /// find out if `name` is used in `node`
@@ -30,12 +27,10 @@ pub fn find(name: &Ident, node: &SyntaxNode<NixLanguage>) -> bool {
         // anyway. Except for `${...}` and `"..."` which do not
         // introduce new scopes in attrsets that are not declared
         // `rec`.
-        node.children().any(|node|
-            (node.kind() == SyntaxKind::NODE_DYNAMIC ||
-             node.kind() == SyntaxKind::NODE_STRING
-            ) &&
-            find(name, &node)
-        )
+        node.children().any(|node| {
+            (node.kind() == SyntaxKind::NODE_DYNAMIC || node.kind() == SyntaxKind::NODE_STRING)
+                && find(name, &node)
+        })
     } else {
         // Just search every child in the AST
         node.children().any(|node| find(name, &node))
