@@ -86,7 +86,7 @@ fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
             } else {
                 let mut tokens = pattern.syntax().children_with_tokens().skip_while(|node| {
                     node.as_node()
-                        .map_or(true, |node| *node != dead_code.binding.decl_node)
+                        .is_none_or(|node| *node != dead_code.binding.decl_node)
                 });
                 tokens.next();
                 for token in tokens {
