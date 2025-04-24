@@ -272,7 +272,7 @@ fn main() {
                 OutputFormat::Json => {
                     crate::report::print_json(&file.to_string(), &content, &results);
                 }
-            };
+            }
         }
         if edit {
             let (new_ast, has_changes) = crate::edit::edit_dead_code(&content, results.into_iter());
