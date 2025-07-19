@@ -30,7 +30,7 @@ impl fmt::Display for DeadCode {
 }
 
 /// Analysis settings
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 #[allow(clippy::struct_excessive_bools)]
 pub struct Settings {
     /// Ignore `...: ...`

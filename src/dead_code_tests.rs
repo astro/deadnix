@@ -13,12 +13,7 @@ fn run_settings(content: &str, settings: &Settings) -> Vec<DeadCode> {
 fn run(content: &str) -> Vec<DeadCode> {
     run_settings(
         content,
-        &Settings {
-            no_lambda_arg: false,
-            no_lambda_pattern_names: false,
-            no_underscore: false,
-            warn_used_underscore: false,
-        },
+        &Settings::default()
     )
 }
 
@@ -505,13 +500,9 @@ fn used_underscore_let() {
         "
       let _x = 23;
       in _x
-    ",
-        &Settings {
-            no_lambda_arg: false,
-            no_lambda_pattern_names: false,
-            no_underscore: false,
-            warn_used_underscore: true,
-        },
-    );
+    ", &Settings {
+        warn_used_underscore: true,
+        .. Settings::default()
+    });
     assert_eq!(1, results.len());
 }

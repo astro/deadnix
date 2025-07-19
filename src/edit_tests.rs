@@ -2,24 +2,18 @@
 
 use crate::dead_code::Settings;
 
-fn run(content: &str) -> (String, bool) {
+fn run(content: &str, settings: Settings) -> (String, bool) {
     let ast = rnix::Root::parse(content);
     assert_eq!(0, ast.errors().len());
 
-    let results = Settings {
-        no_lambda_arg: false,
-        no_lambda_pattern_names: false,
-        no_underscore: false,
-        warn_used_underscore: false,
-    }
-    .find_dead_code(&ast.syntax());
+    let results = settings.find_dead_code(&ast.syntax());
     crate::edit::edit_dead_code(content, results.into_iter())
 }
 
 macro_rules! no_edits {
     ($s: expr) => {
         let s = $s.to_string();
-        assert_eq!(run(&s), (s, false));
+        assert_eq!(run(&s, Settings::default()), (s, false));
     };
 }
 
@@ -27,7 +21,12 @@ macro_rules! has_edits {
     ($s1: expr, $s2: expr) => {
         let s1 = $s1.to_string();
         let s2 = $s2.to_string();
-        assert_eq!(run(&s1), (s2, true));
+        assert_eq!(run(&s1, Settings::default()), (s2, true));
+    };
+    ($s1: expr, $s2: expr, $settings: expr) => {
+        let s1 = $s1.to_string();
+        let s2 = $s2.to_string();
+        assert_eq!(run(&s1, $settings), (s2, true));
     };
 }
 
