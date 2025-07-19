@@ -194,3 +194,19 @@ fn lambda_pattern_dead_multiline() {
         "{ alive\n, ... }:\nalive"
     );
 }
+
+#[test]
+fn attrset_trailing_comma() {
+    has_edits!(
+        "{ bar, foo, }: bar",
+        "{ bar, }: bar"
+    );
+}
+
+#[test]
+fn attrset_no_trailing_comma() {
+    has_edits!(
+        "{ bar, foo }: bar",
+        "{ bar }: bar"
+    );
+}

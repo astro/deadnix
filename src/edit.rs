@@ -90,10 +90,25 @@ fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
                 });
                 tokens.next();
                 for token in tokens {
+                    replacement = Some(String::new());
                     if token.kind() == SyntaxKind::TOKEN_COMMA {
                         // up to the next comma
                         end = usize::from(token.text_range().end());
-                        replacement = Some(String::new());
+                        break;
+                    } else if token.kind() == SyntaxKind::TOKEN_R_BRACE {
+                        // last binding before `}`, find the trailing comma before
+                        let Some(mut prev) = dead_code.binding.decl_node.prev_sibling_or_token() else {
+                            break;
+                        };
+                        while prev.kind() == SyntaxKind::TOKEN_WHITESPACE {
+                            match prev.prev_sibling_or_token() {
+                                Some(prev_token) => prev = prev_token,
+                                None => break,
+                            }
+                        }
+                        if prev.kind() == SyntaxKind::TOKEN_COMMA {
+                            start = usize::from(prev.text_range().start());
+                        }
                         break;
                     } else if token.kind() != SyntaxKind::TOKEN_WHITESPACE {
                         // delete only whitespace
@@ -137,7 +152,11 @@ fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
         // remove whitespace before node
         if let Some(prev) = replace_node.prev_sibling_or_token() {
             if prev.kind() == SyntaxKind::TOKEN_WHITESPACE {
-                start = usize::from(prev.text_range().start());
+                let whitespace_start = usize::from(prev.text_range().start());
+                // only if we didn't seek the leading `,` before
+                if whitespace_start < start {
+                    start = whitespace_start;
+                }
             }
         }
 

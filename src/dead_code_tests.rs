@@ -506,3 +506,19 @@ fn used_underscore_let() {
     });
     assert_eq!(1, results.len());
 }
+
+#[test]
+fn ident_is_no_var() {
+    let results = run(
+        "
+{ bar, foo }:
+
+{
+  baz = [
+    bar.foo
+  ];
+}
+    ");
+    assert_eq!(1, results.len());
+    assert_eq!(results[0].binding.name.to_string(), "foo");
+}
