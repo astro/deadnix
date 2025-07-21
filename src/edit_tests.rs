@@ -2,7 +2,7 @@
 
 use crate::dead_code::Settings;
 
-fn run(content: &str, settings: Settings) -> (String, bool) {
+fn run(content: &str, settings: &Settings) -> (String, bool) {
     let ast = rnix::Root::parse(content);
     assert_eq!(0, ast.errors().len());
 
@@ -13,7 +13,7 @@ fn run(content: &str, settings: Settings) -> (String, bool) {
 macro_rules! no_edits {
     ($s: expr) => {
         let s = $s.to_string();
-        assert_eq!(run(&s, Settings::default()), (s, false));
+        assert_eq!(run(&s, &Settings::default()), (s, false));
     };
 }
 
@@ -21,12 +21,12 @@ macro_rules! has_edits {
     ($s1: expr, $s2: expr) => {
         let s1 = $s1.to_string();
         let s2 = $s2.to_string();
-        assert_eq!(run(&s1, Settings::default()), (s2, true));
+        assert_eq!(run(&s1, &Settings::default()), (s2, true));
     };
     ($s1: expr, $s2: expr, $settings: expr) => {
         let s1 = $s1.to_string();
         let s2 = $s2.to_string();
-        assert_eq!(run(&s1, $settings), (s2, true));
+        assert_eq!(run(&s1, &$settings), (s2, true));
     };
 }
 
