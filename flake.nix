@@ -27,7 +27,13 @@
                 -A clippy::must-use-candidate \
                 -A clippy::missing-panics-doc
           '';
-          meta.description = "Scan Nix files for dead code";
+          meta = with lib; {
+            description = "Find and remove unused code in .nix source files";
+            homepage = "https://github.com/astro/deadnix";
+            license = licenses.gpl3Only;
+            mainProgram = "deadnix";
+            maintainers = with maintainers; [ astro ];
+          };
         };
     in
     utils.lib.eachDefaultSystem
