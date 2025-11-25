@@ -1,12 +1,16 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, utils }:
+  outputs = { self, nixpkgs }:
     let
       inherit (nixpkgs) lib;
+
+      forAllSystems = function: lib.genAttrs
+        [ "x86_64-linux" "x86_64-darwin" "aarch64-linux" "aarch64-darwin" ]
+        (system: function nixpkgs.legacyPackages.${system});
+
       deadnixLambda = pkgs:
         pkgs.rustPlatform.buildRustPackage {
           pname = "deadnix";
@@ -35,32 +39,28 @@
             maintainers = with maintainers; [ astro ];
           };
         };
-    in
-    utils.lib.eachDefaultSystem
-      (system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
+    in {
+      packages = forAllSystems (pkgs: {
+        default = self.packages.${pkgs.system}.deadnix;
+        deadnix = deadnixLambda pkgs;
+      });
 
-          packages = {
-            default = self.packages."${system}".deadnix;
-            deadnix = deadnixLambda pkgs;
-          };
-        in
-        {
-          inherit packages;
+      checks = self.packages;
 
-          checks = packages;
+      apps = forAllSystems (pkgs: {
+        default = {
+          type = "app";
+          program = lib.getExe self.packages.${pkgs.system}.default;
+        };
+      });
 
-          apps.default = utils.lib.mkApp {
-            drv = self.packages."${system}".default;
-          };
+      devShells = forAllSystems (pkgs: {
+        default = with pkgs; mkShell {
+          nativeBuildInputs = [ cargo rustc rustfmt rustPackages.clippy rust-analyzer libiconv ];
+          RUST_SRC_PATH = rustPlatform.rustLibSrc;
+        };
+      });
 
-          devShells.default = with pkgs; mkShell {
-            nativeBuildInputs = [ cargo rustc rustfmt rustPackages.clippy rust-analyzer libiconv ];
-            RUST_SRC_PATH = rustPlatform.rustLibSrc;
-          };
-        })
-    // {
       overlays.default = (final: _: {
         deadnix = deadnixLambda final;
       });
