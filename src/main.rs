@@ -184,7 +184,7 @@ fn main() {
             ),
 
             // single file
-            Ok(_) => Box::new([path.to_string()].into_iter()),
+            Ok(_) => Box::new([path.clone()].into_iter()),
 
             // error
             Err(error) => {
@@ -265,12 +265,12 @@ fn main() {
         if !quiet && !results.is_empty() {
             match output_format {
                 OutputFormat::HumanReadable => {
-                    crate::report::print(file.to_string(), &content, &results);
+                    crate::report::print(file.clone(), &content, &results);
                 }
 
                 #[cfg(feature = "json-out")]
                 OutputFormat::Json => {
-                    crate::report::print_json(&file.to_string(), &content, &results);
+                    crate::report::print_json(&file.clone(), &content, &results);
                 }
             }
         }
