@@ -197,24 +197,15 @@ fn lambda_pattern_dead_multiline() {
 
 #[test]
 fn attrset_trailing_comma() {
-    has_edits!(
-        "{ bar, foo, }: bar",
-        "{ bar, }: bar"
-    );
+    has_edits!("{ bar, foo, }: bar", "{ bar, }: bar");
 }
 
 #[test]
 fn attrset_no_trailing_comma() {
-    has_edits!(
-        "{ bar, foo }: bar",
-        "{ bar }: bar"
-    );
+    has_edits!("{ bar, foo }: bar", "{ bar }: bar");
 }
 
 #[test]
 fn attrset_all_unused() {
-    has_edits!(
-        "{ bar, foo }: 1",
-        "{ }: 1"
-    );
+    has_edits!("{ bar, foo }: 1", "{ }: 1");
 }

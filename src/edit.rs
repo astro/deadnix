@@ -99,7 +99,8 @@ fn dead_to_edit(dead_code: DeadCode) -> Option<Edit> {
                         break;
                     } else if token.kind() == SyntaxKind::TOKEN_R_BRACE {
                         // last binding before `}`, find the trailing comma before
-                        let Some(mut prev) = dead_code.binding.decl_node.prev_sibling_or_token() else {
+                        let Some(mut prev) = dead_code.binding.decl_node.prev_sibling_or_token()
+                        else {
                             break;
                         };
                         while prev.kind() == SyntaxKind::TOKEN_WHITESPACE {

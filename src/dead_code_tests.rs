@@ -11,10 +11,7 @@ fn run_settings(content: &str, settings: &Settings) -> Vec<DeadCode> {
 }
 
 fn run(content: &str) -> Vec<DeadCode> {
-    run_settings(
-        content,
-        &Settings::default()
-    )
+    run_settings(content, &Settings::default())
 }
 
 #[test]
@@ -500,17 +497,18 @@ fn used_underscore_let() {
         "
       let _x = 23;
       in _x
-    ", &Settings {
-        warn_used_underscore: true,
-        .. Settings::default()
-    });
+    ",
+        &Settings {
+            warn_used_underscore: true,
+            ..Settings::default()
+        },
+    );
     assert_eq!(1, results.len());
 }
 
 #[test]
 fn ident_is_no_var() {
-    let results = run(
-        "
+    let results = run("
 { bar, foo }:
 
 {
