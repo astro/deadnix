@@ -10,8 +10,8 @@ repository = "https://github.com/astro/deadnix.git"
 documentation = "https://docs.rs/deadnix"
 
 [dependencies]
-rowan = "0.15"  # dependency version of rnix-0.12.0
-rnix = "0.12"
+rowan = "0.16"  # dependency version of rnix-0.14.0
+rnix = "0.14"
 clap = "4"
 walkdir = "2"
 ariadne = "0.6"
