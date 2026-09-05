@@ -70,6 +70,12 @@ fn main() {
                 .help("Remove unused code and write to source file"),
         )
         .arg(
+            Arg::new("STDOUT")
+                .action(ArgAction::SetTrue)
+                .long("stdout")
+                .help("Output edited files on stdout instead of writing them"),
+        )
+        .arg(
             Arg::new("HIDDEN")
                 .action(ArgAction::SetTrue)
                 .short('h')
@@ -124,6 +130,7 @@ fn main() {
     };
     let quiet = matches.get_flag("QUIET");
     let edit = matches.get_flag("EDIT");
+    let edit_to_stdout = matches.get_flag("STDOUT");
     let is_visible = if matches.get_flag("HIDDEN") {
         |_: &walkdir::DirEntry| true
     } else {
@@ -282,7 +289,11 @@ fn main() {
         if edit {
             let (new_ast, has_changes) = crate::edit::edit_dead_code(&content, results.into_iter());
             if has_changes {
-                fs::write(file, new_ast).expect("fs::write");
+                if edit_to_stdout {
+                    print!("{new_ast}");
+                } else {
+                    fs::write(file, new_ast).expect("fs::write");
+                }
             }
         }
     }
