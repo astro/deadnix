@@ -270,7 +270,7 @@ fn main() {
         if !quiet && !results.is_empty() {
             match output_format {
                 OutputFormat::HumanReadable => {
-                    crate::report::print(file.clone(), &content, &results);
+                    crate::report::print(&file, &content, &results);
                 }
 
                 #[cfg(feature = "json-out")]
