@@ -11,7 +11,9 @@ use serde_json::json;
 /// Build a report and print it to stdout
 ///
 /// assumes results to be sorted by occurrence in file
-pub fn print(file: String, content: &str, results: &[DeadCode]) {
+pub fn print(file: &str, content: &str, results: &[DeadCode]) {
+
+    let file = file.to_owned();
     let no_color = env::var("NO_COLOR").is_ok();
 
     // advance into content to convert byte offsets into char offsets
@@ -56,7 +58,6 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
             result_ranges_by_line.first_key_value().unwrap().1[0]
                 .1
                 .start
-                .into()
                 ..result_ranges_by_line
                     .last_key_value()
                     .unwrap()
@@ -64,19 +65,18 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
                     .last()
                     .unwrap()
                     .1
-                    .end
-                    .into(),
+                    .end,
         ),
     )
     .with_config(Config::default().with_compact(true).with_color(!no_color))
     .with_message("Unused declarations were found.");
     let mut order = 0;
-    for (_line, ranges) in result_ranges_by_line.into_iter() {
+    for (_line, ranges) in result_ranges_by_line {
         for (result, range) in ranges.into_iter().rev() {
             // add report label
             let mut label = Label::new((file.clone(), range))
                 .with_message(format!("{result}"))
-                .with_order(order as i32);
+                .with_order(order);
             order += 1;
             if !no_color {
                 label = label.with_color(result.scope.color());
@@ -84,6 +84,7 @@ pub fn print(file: String, content: &str, results: &[DeadCode]) {
             builder = builder.with_label(label);
         }
     }
+
     // print
     builder
         .finish()
